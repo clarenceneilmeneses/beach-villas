@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Send } from "@/components/icons";
 import { useNavPillAway } from "@/components/nav-pill";
-import { PublicShell } from "@/components/public/chrome";
+import { BackButton, PublicShell } from "@/components/public/chrome";
 import { AuthPanel } from "@/components/public/auth-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,6 +78,7 @@ function Messages() {
   return (
     <PublicShell hideFooter>
       <div className="mx-auto flex max-w-2xl flex-col px-4 pb-32 pt-6 sm:px-8 md:pb-10">
+        <BackButton className="mb-4 self-start" />
         <h1 className="site-display text-3xl">Messages</h1>
         <p className="text-sm text-muted-foreground">Ask {settings?.resort_name ?? "us"} anything — rates, slots, directions. We reply here.</p>
 

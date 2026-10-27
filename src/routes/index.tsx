@@ -22,12 +22,12 @@ function Home() {
   });
 
   return (
-    <PublicShell>
-      <section className="px-4 pb-10 pt-10 text-center sm:px-8 md:pb-14 md:pt-20">
-        <p className="site-display text-[11px] tracking-[0.5em] text-muted-foreground sm:text-sm">{settings?.address || "By the beach"}</p>
-        <h1 className="site-display mx-auto mt-4 max-w-4xl text-4xl leading-[1.02] sm:text-6xl lg:text-7xl">Book your day by the beach</h1>
-        <p className="site-display mx-auto mt-5 max-w-xl text-[11px] tracking-[0.35em] text-muted-foreground sm:text-sm">{settings?.tagline}</p>
-        <div className="mx-auto mt-8 max-w-3xl md:mt-12">
+    <PublicShell explore>
+      <section className="px-4 pb-8 pt-3 text-center sm:px-8 md:pb-14 md:pt-20">
+        <p className="site-display hidden text-[11px] tracking-[0.5em] text-muted-foreground sm:text-sm md:block">{settings?.address || "By the beach"}</p>
+        <h1 className="site-display mx-auto mt-4 hidden max-w-4xl text-4xl leading-[1.02] sm:text-6xl md:block lg:text-7xl">Book your day by the beach</h1>
+        <p className="site-display mx-auto mt-5 hidden max-w-xl text-[11px] tracking-[0.35em] text-muted-foreground sm:text-sm md:block">{settings?.tagline}</p>
+        <div className="mx-auto max-w-3xl md:mt-12">
           <SearchPill key={JSON.stringify(stay)} value={stay} onSearch={(v) => navigate({ to: "/", search: v, hash: "cottages" })} />
         </div>
       </section>

@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, ShieldCheck } from "@/components/icons";
+import { ArrowLeft, CheckCircle2, Minus, Pencil, Plus, ShieldCheck } from "@/components/icons";
 import { useNavPillAway } from "@/components/nav-pill";
 import { PhotoTile, PublicShell } from "@/components/public/chrome";
 import { AuthPanel } from "@/components/public/auth-panel";
@@ -12,10 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 import { slotTimes, useCottageTypes, useSettings, type CottageType } from "@/lib/data";
-import { niceDate, php, SLOT_LABEL } from "@/lib/format";
+import { manilaToday, niceDate, php, SLOT_LABEL } from "@/lib/format";
 import { rpc, uploadReceipt } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -205,8 +206,68 @@ function Trip({ t, q, total, settings }: { t?: CottageType; q: Q; total?: number
         </div>
       </div>
       <PriceLines t={t} total={total} />
-      <Link to="/cottages/$typeId" params={{ typeId: t.id }} search={{ date: q.date, slot: q.slot, adults: q.adults, children: q.children }} className="link-action text-sm">Change date, stay or guests</Link>
+      <EditTrip t={t} q={q} />
     </div>
+  );
+}
+
+/** Edit where you are (Malaya's checkout): the trip changes in a sheet, the guest stays on this step. */
+function EditTrip({ t, q }: { t: CottageType; q: Q }) {
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(q.date);
+  const [slot, setSlot] = useState(q.slot);
+  const [adults, setAdults] = useState(q.adults);
+  const [kids, setKids] = useState(q.children);
+  useEffect(() => {
+    if (!open) return;
+    setDate(q.date);
+    setSlot(q.slot);
+    setAdults(q.adults);
+    setKids(q.children);
+  }, [open, q.date, q.slot, q.adults, q.children]);
+  const tooMany = adults + kids > t.max_pax;
+  const save = () => {
+    navigate({ to: "/book", search: { ...search, date, slot, adults, children: kids }, replace: true });
+    setOpen(false);
+  };
+  const stepper = (label: string, value: number, min: number, set: (n: number) => void) => (
+    <div className="flex items-center justify-between py-3">
+      <span className="font-medium">{label}</span>
+      <span className="flex items-center gap-3">
+        <Button type="button" variant="outline" size="icon" className="size-8 rounded-full" disabled={value <= min} onClick={() => set(value - 1)} aria-label={"Fewer " + label}><Minus className="size-4" /></Button>
+        <span className="w-6 text-center tabular-nums">{value}</span>
+        <Button type="button" variant="outline" size="icon" className="size-8 rounded-full" onClick={() => set(value + 1)} aria-label={"More " + label}><Plus className="size-4" /></Button>
+      </span>
+    </div>
+  );
+  return (
+    <>
+      <Button variant="outline" className="rounded-full" onClick={() => setOpen(true)}><Pencil className="size-4" /> Edit</Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="mx-auto max-w-lg rounded-t-3xl pb-8">
+          <SheetTitle className="font-display text-xl">Edit your trip</SheetTitle>
+          <div className="mt-4 space-y-4">
+            <div className="space-y-1.5"><Label htmlFor="et-date">Date</Label><Input id="et-date" type="date" className="h-12" min={manilaToday()} value={date} onChange={(e) => setDate(e.target.value)} /></div>
+            <div className="space-y-1.5">
+              <Label>Stay</Label>
+              <div className="inline-flex w-full gap-0.5 rounded-full border border-border/70 bg-card p-1 shadow-level-1">
+                {(["day", "night", "h22"] as const).map((x) => (
+                  <button key={x} type="button" onClick={() => setSlot(x)} className={cn("flex-1 rounded-full py-1.5 text-[13px]", slot === x ? "bg-secondary font-medium text-primary" : "text-muted-foreground")}>{SLOT_LABEL[x]}</button>
+                ))}
+              </div>
+            </div>
+            <div className="divide-y divide-border/60 rounded-2xl border border-border/70 px-4">
+              {stepper("Adults", adults, 1, setAdults)}
+              {stepper("Kids", kids, 0, setKids)}
+            </div>
+            {tooMany && <p className="text-sm text-destructive">{t.name} fits up to {t.max_pax} guests.</p>}
+            <Button className="h-12 w-full rounded-full" disabled={tooMany || !date} onClick={save}>Save</Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 

@@ -1,16 +1,43 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import type { ReactNode } from "react";
-import { CalendarCheck, Mail, MapPin, MessageCircle, Phone, Search, UserRound } from "@/components/icons";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { useState, type ReactNode } from "react";
+import {
+  ArrowLeft,
+  CalendarCheck,
+  FileText,
+  Info,
+  LogOut,
+  Mail,
+  MapPin,
+  MessageCircle,
+  MoreHorizontal,
+  Phone,
+  Search,
+  User,
+} from "@/components/icons";
 import { NAV_PILL, navPillDock, navPillTab, useNavPillIsAway, useTyping } from "@/components/nav-pill";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
 import { useSettings } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 /**
- * The guest site's frame, Malaya's public chrome: wordmark, a centred caps
- * nav, Sign in and a Book now pill; a four-column footer; on a phone the
- * floating nav pill and a round chat button.
+ * The guest site's frame, Malaya's public chrome.
+ *
+ * Laptop: the white header bar on every page (wordmark, caps nav, Sign in or
+ * the account menu, Book now). Phone: no bar — on Explore the wordmark sits
+ * on the page with the account pill on the right; every other screen is its
+ * own page with a Back button, and the bottom nav pill with the round chat
+ * button beside it does the rest. The footer is Explore's only.
  */
 export function Wordmark({ className }: { className?: string }) {
   const name = useSettings().data?.resort_name ?? "Beach Villas";
@@ -21,22 +48,43 @@ export function Wordmark({ className }: { className?: string }) {
   );
 }
 
-const NAV = [
-  { to: "/", label: "Cottages", exact: true },
-  { to: "/about", label: "About" },
-  { to: "/my", label: "My bookings" },
-  { to: "/messages", label: "Messages" },
-];
+const TOP_PILL = "flex items-center gap-0.5 rounded-full border border-border/70 bg-card shadow-level-2";
 
-function Header() {
+function AccountMenu() {
+  const { session } = useAuth();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className={cn(TOP_PILL, "size-10 justify-center")} aria-label="Account">
+          <User className="size-[18px]" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel className="truncate font-normal text-muted-foreground">{session?.user.email}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild><Link to="/my"><CalendarCheck className="mr-2 size-4" /> My bookings</Link></DropdownMenuItem>
+        <DropdownMenuItem asChild><Link to="/messages"><MessageCircle className="mr-2 size-4" /> Messages</Link></DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onSelect={() => void supabase.auth.signOut()}><LogOut className="mr-2 size-4" /> Sign out</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** The laptop's white bar, on every page. */
+function DesktopHeader() {
   const { session } = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-[72px] max-w-[1280px] items-center justify-between gap-6 px-4 sm:px-8">
+    <header className="sticky top-0 z-30 hidden border-b border-border/60 bg-card/95 backdrop-blur md:block">
+      <div className="mx-auto flex h-[72px] max-w-[1280px] items-center justify-between gap-6 px-8">
         <Wordmark />
-        <nav className="hidden items-center gap-10 md:flex">
-          {NAV.map((n) => (
+        <nav className="flex items-center gap-10">
+          {[
+            { to: "/", label: "Cottages", exact: true },
+            { to: "/about", label: "About" },
+            { to: "/my", label: "My bookings" },
+          ].map((n) => (
             <Link
               key={n.to}
               to={n.to}
@@ -49,9 +97,9 @@ function Header() {
         </nav>
         <div className="flex items-center gap-3">
           {session ? (
-            <Link to="/my" className="site-display hidden text-[15px] font-medium text-foreground/80 hover:text-foreground sm:block">Account</Link>
+            <AccountMenu />
           ) : (
-            <Link to="/login" search={{ next: path }} className="site-display hidden text-[15px] font-medium text-foreground/80 hover:text-foreground sm:block">Sign in</Link>
+            <Link to="/login" search={{ next: path }} className="site-display text-[15px] font-medium text-foreground/80 hover:text-foreground">Sign in</Link>
           )}
           <Button asChild className="site-display h-10 rounded-full px-5 text-[15px]">
             <Link to="/" hash="cottages">Book now</Link>
@@ -59,6 +107,24 @@ function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+/** Explore's top on a phone: the wordmark on the page, the account pill on the right. No bar. */
+function PhoneTop() {
+  const { session } = useAuth();
+  return (
+    <div className="flex items-center justify-between px-4 pb-2 pt-4 md:hidden">
+      <Wordmark />
+      {session ? (
+        <div className={cn(TOP_PILL, "p-1")}>
+          <Link to="/messages" className="grid size-9 place-items-center rounded-full text-foreground/75 hover:bg-secondary" aria-label="Messages"><MessageCircle className="size-[18px]" /></Link>
+          <Link to="/my" className="grid size-9 place-items-center rounded-full text-foreground/75 hover:bg-secondary" aria-label="My bookings"><User className="size-[18px]" /></Link>
+        </div>
+      ) : (
+        <Button asChild size="sm" className="site-display h-10 rounded-full px-5 text-[15px]"><Link to="/login">Sign in</Link></Button>
+      )}
+    </div>
   );
 }
 
@@ -83,7 +149,6 @@ function Footer() {
           <p className={head}>Support</p>
           <Link to="/my" className="flex items-center gap-2 hover:underline"><CalendarCheck className="size-4" /> My bookings</Link>
           <Link to="/messages" className="flex items-center gap-2 hover:underline"><MessageCircle className="size-4" /> Message us</Link>
-          {s?.messenger_url && <a href={s.messenger_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:underline"><MessageCircle className="size-4" /> Messenger</a>}
           {s?.whatsapp_number && <a href={`tel:${s.whatsapp_number}`} className="flex items-center gap-2 hover:underline"><Phone className="size-4" /> {s.whatsapp_number}</a>}
         </div>
         <div className={col}>
@@ -98,36 +163,93 @@ function Footer() {
   );
 }
 
+/** "More" on the phone: everything that isn't a tab. */
+function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { session } = useAuth();
+  const s = useSettings().data;
+  const row = "flex items-center gap-3 rounded-2xl px-3 py-3 text-left hover:bg-secondary";
+  const close = () => onOpenChange(false);
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="rounded-t-3xl pb-8">
+        <SheetTitle className="font-display text-lg">More</SheetTitle>
+        {session && <p className="mt-1 truncate text-sm text-muted-foreground">{session.user.email}</p>}
+        <div className="mt-4 grid gap-1">
+          <Link to="/messages" onClick={close} className={row}><MessageCircle className="size-5" /> Messages</Link>
+          <Link to="/about" onClick={close} className={row}><Info className="size-5" /> About</Link>
+          <Link to="/about" hash="policy" onClick={close} className={row}><FileText className="size-5" /> Booking policy & house rules</Link>
+          {s?.facebook_url && <a href={s.facebook_url} target="_blank" rel="noreferrer" className={row}><Mail className="size-5" /> Facebook page</a>}
+          {session ? (
+            <button type="button" onClick={() => { void supabase.auth.signOut(); close(); }} className={cn(row, "text-destructive")}><LogOut className="size-5" /> Sign out</button>
+          ) : (
+            <Link to="/login" onClick={close} className={row}><User className="size-5" /> Sign in</Link>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/** Malaya's phone nav: Explore, Bookings, About and More in one pill, the round chat button beside it. */
 function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const typing = useTyping();
   const away = useNavPillIsAway();
+  const [more, setMore] = useState(false);
   const tabs = [
     { to: "/", label: "Explore", icon: Search, active: path === "/" || path.startsWith("/cottages") || path.startsWith("/book") },
     { to: "/my", label: "Bookings", icon: CalendarCheck, active: path.startsWith("/my") },
-    { to: "/messages", label: "Messages", icon: MessageCircle, active: path.startsWith("/messages") },
-    { to: "/about", label: "About", icon: UserRound, active: path.startsWith("/about") },
+    { to: "/about", label: "About", icon: Info, active: path.startsWith("/about") },
   ];
   return (
-    <div className={cn(navPillDock(typing || away), "md:hidden")}>
-      <nav className={NAV_PILL}>
-        {tabs.map((t) => (
-          <Link key={t.to} to={t.to} className={navPillTab(t.active)}>
-            <t.icon className="size-[22px]" strokeWidth={t.active ? 2.2 : 1.8} />
-            <span>{t.label}</span>
-          </Link>
-        ))}
-      </nav>
-    </div>
+    <>
+      <div className={cn(navPillDock(typing || away), "md:hidden")}>
+        <nav className={NAV_PILL}>
+          {tabs.map((t) => (
+            <Link key={t.to} to={t.to} className={navPillTab(t.active)}>
+              <t.icon className="size-[22px]" strokeWidth={t.active ? 2.2 : 1.8} />
+              <span>{t.label}</span>
+            </Link>
+          ))}
+          <button type="button" onClick={() => setMore(true)} className={navPillTab(false)}>
+            <MoreHorizontal className="size-[22px]" strokeWidth={1.8} />
+            <span>More</span>
+          </button>
+        </nav>
+        <Link
+          to="/messages"
+          aria-label="Messages"
+          className="grid size-[62px] shrink-0 place-items-center rounded-full border border-border/70 bg-card text-foreground shadow-level-2 transition-transform active:scale-90"
+        >
+          <MessageCircle className="size-7" />
+        </Link>
+      </div>
+      <MoreSheet open={more} onOpenChange={setMore} />
+    </>
   );
 }
 
-export function PublicShell({ children, hideFooter = false }: { children: ReactNode; hideFooter?: boolean }) {
+/** Back, as on Malaya's villa page: the previous page if there is one, else Explore. */
+export function BackButton({ label = "Back", className }: { label?: string; className?: string }) {
+  const router = useRouter();
+  return (
+    <Button
+      variant="outline"
+      className={cn("rounded-full", className)}
+      onClick={() => (window.history.length > 1 ? router.history.back() : router.navigate({ to: "/" }))}
+    >
+      <ArrowLeft className="size-4" /> {label}
+    </Button>
+  );
+}
+
+export function PublicShell({ children, explore = false }: { children: ReactNode; explore?: boolean; hideFooter?: boolean }) {
   return (
     <div className="min-h-dvh bg-background pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
-      <Header />
+      <DesktopHeader />
+      {explore && <PhoneTop />}
       <main>{children}</main>
-      {!hideFooter && <Footer />}
+      {explore && <Footer />}
       <Link
         to="/messages"
         aria-label="Message us"
