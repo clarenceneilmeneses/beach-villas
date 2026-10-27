@@ -1,216 +1,128 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { toast } from "sonner";
-import { Add01Icon } from "@hugeicons/core-free-icons";
-import { BookingSheet } from "@/components/booking-sheet";
-import { Badge, Button, Card, Empty, Icon, Input, SchemaNotice, Segmented, Select, Spinner, statusTone } from "@/components/ui";
-import { addDays, manilaToday, METHOD_LABEL, money, niceDate, niceDateTime, SLOT_LABEL, SOURCE_LABEL, STATUS_LABEL } from "@/lib/format";
-import { rpc, signedUrl, supabase } from "@/lib/supabase";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { ArrowRight } from "@/components/icons";
+import { useBookingDialog } from "@/components/obs/booking-dialog";
+import { SourcePill, StatusPill } from "@/components/obs/booking-bits";
+import { KpiCard, SectionHeading } from "@/components/obs/cards";
+import { ChipGroup } from "@/components/obs/chip-group";
+import { SearchPill } from "@/components/obs/search-pill";
+import { BookingCard } from "@/components/obs/booking-card";
+import { EmptyState, ErrorState, LoadingState } from "@/components/obs/states";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { collectedOf, pax, useBookings, type BookingRow } from "@/lib/bookings";
+import { niceDate, niceDateTime, php, SLOT_LABEL } from "@/lib/format";
 
-type Tab = "requests" | "today" | "all" | "guests";
+export const Route = createFileRoute("/admin/bookings/")({ component: Reservations });
 
-export const Route = createFileRoute("/admin/bookings/")({
-  validateSearch: (s: Record<string, unknown>) => ({ tab: (["requests", "today", "all", "guests"].includes(String(s.tab)) ? s.tab : "today") as Tab }),
-  component: Bookings,
-});
+type Tab = "active" | "to_settle" | "settled" | "cancelled" | "all";
+const TABS: { value: Tab; label: string; test: (b: BookingRow) => boolean; waiting?: boolean }[] = [
+  { value: "active", label: "Active", test: (b) => ["pending", "confirmed", "checked_in"].includes(b.status) && !b.checked_out_at },
+  { value: "to_settle", label: "To settle", test: (b) => !!b.checked_out_at && ["confirmed", "checked_in"].includes(b.status), waiting: true },
+  { value: "settled", label: "Settled", test: (b) => b.status === "settled" },
+  { value: "cancelled", label: "Cancelled", test: (b) => ["cancelled", "no_show", "expired"].includes(b.status) },
+  { value: "all", label: "All", test: () => true },
+];
 
-const BOOKING_COLS = "id, code, stay_date, slot, status, source, pax_adults, pax_children, estimate, final_amount, checked_out_at, cottages(name), guests(name, mobile)";
-
-function Bookings() {
-  const { tab } = Route.useSearch();
-  const navigate = useNavigate();
-  const [add, setAdd] = useState(false);
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Bookings</h1>
-        <Button onClick={() => setAdd(true)}><Icon icon={Add01Icon} size={18} /> Add</Button>
-      </div>
-      <Segmented<Tab>
-        value={tab}
-        onChange={(t) => navigate({ to: "/admin/bookings", search: { tab: t } })}
-        options={[{ value: "today", label: "Today" }, { value: "requests", label: "Requests" }, { value: "all", label: "All" }, { value: "guests", label: "Guests" }]}
-      />
-      {tab === "requests" && <Requests />}
-      {tab === "today" && <Today />}
-      {tab === "all" && <All />}
-      {tab === "guests" && <Guests />}
-      <BookingSheet open={add} onClose={() => setAdd(false)} preset={{ source: "messenger" }} />
-    </div>
-  );
-}
-
-export function BookingRow({ b }: { b: any }) {
-  return (
-    <Link to="/admin/bookings/$id" params={{ id: b.id }} className="block rounded-2xl border border-neutral-200 px-4 py-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate font-medium">{b.guests?.name ?? "—"} <span className="text-xs font-normal text-neutral-400">{b.code}</span></p>
-          <p className="text-sm text-neutral-500">{b.cottages?.name} · {niceDate(b.stay_date)} · {SLOT_LABEL[b.slot as keyof typeof SLOT_LABEL]}</p>
-          <p className="text-xs text-neutral-400">{SOURCE_LABEL[b.source]} · {b.pax_adults + b.pax_children} pax · {money(b.final_amount ?? b.estimate)}</p>
-        </div>
-        <Badge tone={b.checked_out_at && b.status !== "settled" ? "amber" : statusTone(b.status)}>
-          {b.checked_out_at && b.status !== "settled" ? "To settle" : STATUS_LABEL[b.status]}
-        </Badge>
-      </div>
-    </Link>
-  );
-}
-
-function Requests() {
-  const qc = useQueryClient();
-  const q = useQuery({
-    queryKey: ["requests"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select(`id, amount, method, reference, receipt_path, created_at, booking_id, bookings(${BOOKING_COLS})`)
-        .eq("status", "submitted")
-        .order("created_at");
-      if (error) throw new Error(error.message);
-      return data as any[];
-    },
-  });
-  async function decide(id: string, ok: boolean) {
-    try {
-      await rpc("verify_payment", { p_payment: id, p_ok: ok });
-      toast.success(ok ? "Verified, booking confirmed" : "Rejected, guest can resend");
-      qc.invalidateQueries();
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
-  }
-  if (q.error) return <SchemaNotice error={q.error} />;
-  if (q.isLoading) return <Spinner />;
-  if (!q.data?.length) return <Empty title="No receipts to verify" hint="Online bookings with a downpayment receipt show up here." />;
-  return (
-    <div className="space-y-3">
-      {q.data.map((p) => (
-        <Card key={p.id} className="space-y-3">
-          <BookingRow b={p.bookings} />
-          <div className="flex items-center justify-between text-sm">
-            <span>{money(p.amount)} {METHOD_LABEL[p.method]} {p.reference && <span className="text-neutral-500">· {p.reference}</span>}</span>
-            <span className="text-xs text-neutral-400">{niceDateTime(p.created_at)}</span>
-          </div>
-          <div className="flex gap-2">
-            <Button tone="outline" size="sm" onClick={async () => { const u = await signedUrl(p.receipt_path); u ? window.open(u, "_blank") : toast.error("No receipt file"); }}>View receipt</Button>
-            <div className="flex-1" />
-            <Button tone="danger" size="sm" onClick={() => decide(p.id, false)}>Reject</Button>
-            <Button tone="success" size="sm" onClick={() => decide(p.id, true)}>Verify</Button>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function Today() {
-  const today = manilaToday();
-  const q = useQuery({
-    queryKey: ["bookings-today", today],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(BOOKING_COLS)
-        .gte("stay_date", addDays(today, -1))
-        .lte("stay_date", today)
-        .in("status", ["pending", "confirmed", "checked_in", "settled"])
-        .order("stay_date");
-      if (error) throw new Error(error.message);
-      return data as any[];
-    },
-  });
-  if (q.error) return <SchemaNotice error={q.error} />;
-  if (q.isLoading) return <Spinner />;
-  const rows = q.data ?? [];
-  const toSettle = rows.filter((b) => b.checked_out_at && b.status !== "settled");
-  const inHouse = rows.filter((b) => b.status === "checked_in" && !b.checked_out_at);
-  const arriving = rows.filter((b) => b.stay_date === today && (b.status === "confirmed" || b.status === "pending"));
-  const settled = rows.filter((b) => b.status === "settled" && b.stay_date === today);
-  return (
-    <div className="space-y-5">
-      <Group title="To settle" rows={toSettle} empty="Nobody waiting to settle." />
-      <Group title="In house" rows={inHouse} empty="No guests checked in." />
-      <Group title="Arriving today" rows={arriving} empty="No more arrivals today." />
-      {settled.length > 0 && <Group title="Settled today" rows={settled} empty="" />}
-    </div>
-  );
-}
-
-const Group = ({ title, rows, empty }: { title: string; rows: any[]; empty: string }) => (
-  <section>
-    <h2 className="mb-2 text-sm font-semibold text-neutral-500">{title} · {rows.length}</h2>
-    {rows.length ? <div className="space-y-2">{rows.map((b) => <BookingRow key={b.id} b={b} />)}</div> : <p className="text-sm text-neutral-400">{empty}</p>}
-  </section>
-);
-
-function All() {
+function Reservations() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [limit, setLimit] = useState(50);
-  const q = useQuery({
-    queryKey: ["bookings-all", search, status, limit],
-    queryFn: async () => {
-      let query = supabase.from("bookings").select(BOOKING_COLS).neq("status", "blocked").order("stay_date", { ascending: false }).limit(limit);
-      if (status) query = query.eq("status", status);
-      const s = search.trim();
-      if (s) {
-        const { data: g } = await supabase.from("guests").select("id").or(`name.ilike.%${s}%,mobile.ilike.%${s}%`).limit(100);
-        const ids = (g ?? []).map((x) => x.id);
-        query = query.or(`code.ilike.%${s}%${ids.length ? `,guest_id.in.(${ids.join(",")})` : ""}`);
-      }
-      const { data, error } = await query;
-      if (error) throw new Error(error.message);
-      return data as any[];
-    },
-  });
+  const [tab, setTab] = useState<Tab>("active");
+  const q = useBookings({ search });
+  const booking = useBookingDialog();
+  const all = q.data ?? [];
+  const counts = useMemo(() => Object.fromEntries(TABS.map((t) => [t.value, all.filter(t.test).length])) as Record<Tab, number>, [all]);
+  const rows = all.filter(TABS.find((t) => t.value === tab)!.test);
+
+  const live = all.filter((b) => !["cancelled", "no_show", "expired"].includes(b.status));
+  const totals = {
+    count: live.length,
+    booked: live.reduce((s, b) => s + Number(b.final_amount ?? b.estimate), 0),
+    collected: all.reduce((s, b) => s + collectedOf(b), 0),
+    toSettle: counts.to_settle ?? 0,
+  };
+
+  if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
+
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-[1fr_auto] gap-2">
-        <Input placeholder="Name, mobile or BK- number" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-36">
-          <option value="">All statuses</option>
-          {["pending", "confirmed", "checked_in", "settled", "cancelled", "no_show", "expired"].map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-        </Select>
+    <div className="space-y-6">
+      <SectionHeading eyebrow="Reservations · every channel" title="All reservations" action={<Button onClick={() => booking.open({ source: "messenger" })}>New reservation</Button>} />
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <KpiCard label="Reservations" value={String(totals.count)} sub="Excludes cancelled and no-shows" />
+        <KpiCard label="Booked value" value={php(totals.booked)} sub="Final amount, or the estimate" />
+        <KpiCard label="Collected" value={php(totals.collected)} sub="Verified payments only" />
+        <KpiCard label="To settle" value={String(totals.toSettle)} sub="Checked out, final not logged" />
       </div>
-      {q.error ? <SchemaNotice error={q.error} /> : q.isLoading ? <Spinner /> : q.data?.length ? (
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <ChipGroup label="Reservation status" value={tab} onChange={setTab} chips={TABS.map((t) => ({ value: t.value, label: t.label, count: counts[t.value], waiting: t.waiting }))} />
+        <SearchPill className="w-full flex-1 sm:w-auto" placeholder="Search BK- number, guest or mobile" value={search} onChange={setSearch} />
+      </div>
+
+      {q.isLoading ? (
+        <LoadingState />
+      ) : rows.length === 0 ? (
+        <EmptyState title="No reservations here" message={search ? `Nothing matches “${search}” on this tab.` : "Walk-ins, chat and website bookings appear here."} />
+      ) : (
         <>
-          <div className="space-y-2">{q.data.map((b) => <BookingRow key={b.id} b={b} />)}</div>
-          {q.data.length === limit && <Button tone="outline" className="w-full" onClick={() => setLimit(limit + 50)}>Load 50 more</Button>}
-        </>
-      ) : <Empty title="No bookings match" />}
-    </div>
-  );
-}
+          <Card className="hidden border-border/70 bg-surface shadow-level-2 lg:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Transaction date</TableHead>
+                    <TableHead>Reservation</TableHead>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Cottage</TableHead>
+                    <TableHead>Stay</TableHead>
+                    <TableHead className="text-right">Booking</TableHead>
+                    <TableHead className="text-right">Collected</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Handled by</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((b) => (
+                    <TableRow key={b.id} className="hover:bg-secondary/50">
+                      <TableCell className="whitespace-nowrap text-sm">{niceDateTime(b.created_at)}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {b.code}
+                        <div className="mt-1"><SourcePill source={b.source} /></div>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm font-medium">{b.guests?.name ?? "—"}</p>
+                        <p className="text-xs text-muted-foreground">{b.guests?.mobile}</p>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {b.cottages?.name}
+                        <p className="text-xs text-muted-foreground">{b.cottages?.cottage_types?.name}</p>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">
+                        {niceDate(b.stay_date)}
+                        <p className="text-xs text-muted-foreground">{SLOT_LABEL[b.slot]} · {pax(b)} pax</p>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right text-sm tabular-nums">{php(b.final_amount ?? b.estimate)}</TableCell>
+                      <TableCell className="text-right text-sm tabular-nums">{php(collectedOf(b))}</TableCell>
+                      <TableCell><StatusPill status={b.status} checkedOut={!!b.checked_out_at} /></TableCell>
+                      <TableCell className="max-w-[160px] truncate text-xs text-muted-foreground">{b.created_by}</TableCell>
+                      <TableCell>
+                        <Link to="/admin/bookings/$id" params={{ id: b.id }} className="link-action inline-flex items-center gap-1 text-xs font-semibold">
+                          Open <ArrowRight className="size-3.5" />
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-function Guests() {
-  const [search, setSearch] = useState("");
-  const q = useQuery({
-    queryKey: ["guests", search],
-    queryFn: async () => {
-      let query = supabase.from("guests").select("id, name, mobile, email, bookings(count)").order("created_at", { ascending: false }).limit(50);
-      if (search.trim()) query = query.or(`name.ilike.%${search.trim()}%,mobile.ilike.%${search.trim()}%`);
-      const { data, error } = await query;
-      if (error) throw new Error(error.message);
-      return data as any[];
-    },
-  });
-  return (
-    <div className="space-y-3">
-      <Input placeholder="Search name or mobile" value={search} onChange={(e) => setSearch(e.target.value)} />
-      {q.isLoading ? <Spinner /> : (
-        <div className="divide-y divide-neutral-100 rounded-2xl border border-neutral-200">
-          {q.data?.map((g) => (
-            <div key={g.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <p className="font-medium">{g.name}</p>
-                <p className="text-sm text-neutral-500">{g.mobile || g.email || "No contact"}</p>
-              </div>
-              <span className="text-sm text-neutral-500">{g.bookings?.[0]?.count ?? 0} visits</span>
-            </div>
-          ))}
-        </div>
+          <div className="space-y-3 lg:hidden">
+            {rows.map((b) => <BookingCard key={b.id} b={b} />)}
+          </div>
+        </>
       )}
     </div>
   );

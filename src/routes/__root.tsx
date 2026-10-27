@@ -1,8 +1,8 @@
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -15,7 +15,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" },
       { rel: "stylesheet", href: appCss },
     ],
   }),
@@ -23,20 +24,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   component: Root,
   notFoundComponent: () => (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-3 px-4 text-center">
-      <p className="text-5xl font-semibold">404</p>
-      <p className="text-neutral-500">This page doesn't exist.</p>
-      <Link to="/" className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white">Back home</Link>
+      <p className="font-display text-6xl">404</p>
+      <p className="text-muted-foreground">This page doesn't exist.</p>
+      <Link to="/" search={{}} className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground">Back home</Link>
     </div>
   ),
 });
 
+/** The guest site and the admin share the tokens; `data-site` switches the guest-only bits, as in Malaya. */
 function Shell({ children }: { children: ReactNode }) {
+  const admin = useRouterState({ select: (s) => s.location.pathname.startsWith("/admin") });
   return (
-    <html lang="en">
+    <html lang="en" data-site={admin ? undefined : "public"}>
       <head>
         <HeadContent />
       </head>
-      <body className="antialiased">
+      <body>
         {children}
         <Scripts />
       </body>
@@ -50,7 +53,7 @@ function Root() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Outlet />
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );

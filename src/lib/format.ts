@@ -65,3 +65,10 @@ export const manilaDayStart = (iso: string) => `${iso}T00:00:00+08:00`;
 export const cn = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(" ");
 
 export const halvesOf = (slot: Slot) => (slot === "h22" || slot === "day_night" ? 2 : 1);
+
+export function signedPct(value: number, digits = 1): string {
+  return `${value > 0 ? "+" : ""}${value.toFixed(digits)}%`;
+}
+
+/** Peso, Malaya's name for it. */
+export const php = money;

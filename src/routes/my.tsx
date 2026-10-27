@@ -2,14 +2,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Upload01Icon } from "@hugeicons/core-free-icons";
-import { AuthPanel } from "@/components/auth-panel";
-import { GuestShell } from "@/components/guest-shell";
-import { Badge, Button, Card, Empty, Field, Icon, Input, Select, Spinner, statusTone } from "@/components/ui";
+import { Upload } from "@/components/icons";
+import { StatusPill } from "@/components/obs/booking-bits";
+import { PhotoTile, PublicShell } from "@/components/public/chrome";
+import { AuthPanel } from "@/components/public/auth-panel";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 import { slotTimes, useSettings, type Booking, type Payment } from "@/lib/data";
-import { METHOD_LABEL, money, niceDate, niceTime, SLOT_LABEL, STATUS_LABEL } from "@/lib/format";
+import { niceDate, niceTime, php, SLOT_LABEL } from "@/lib/format";
 import { rpc, supabase, uploadReceipt } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/my")({
   validateSearch: (s: Record<string, unknown>): { new?: string } => (typeof s.new === "string" ? { new: s.new } : {}),
@@ -35,59 +42,70 @@ function MyBookings() {
     },
   });
 
-  if (!ready) return <GuestShell><Spinner /></GuestShell>;
-  if (!session)
-    return (
-      <GuestShell>
-        <Card><AuthPanel hint="Sign in to see your bookings." /></Card>
-      </GuestShell>
-    );
-
   return (
-    <GuestShell>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">My bookings</h1>
-        <button onClick={() => supabase.auth.signOut()} className="text-sm text-neutral-500">Sign out</button>
+    <PublicShell>
+      <div className="mx-auto max-w-[1100px] px-4 pt-8 sm:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="site-display text-3xl sm:text-4xl">My bookings</h1>
+            {session && <p className="text-sm text-muted-foreground">{session.user.email}</p>}
+          </div>
+          {session && <Button variant="outline" className="rounded-full" onClick={() => supabase.auth.signOut()}>Sign out</Button>}
+        </div>
+
+        <div className="mt-6">
+          {!ready ? <Skeleton className="h-40 rounded-3xl" /> : !session ? (
+            <Card className="mx-auto max-w-sm rounded-3xl border-border/70 shadow-level-2"><CardContent className="p-6"><AuthPanel hint="Sign in to see your bookings." /></CardContent></Card>
+          ) : list.isLoading ? <Skeleton className="h-40 rounded-3xl" /> : list.data?.length ? (
+            <div className="grid gap-5 lg:grid-cols-2">{list.data.map((b) => <TripCard key={b.id} b={b} highlight={b.id === fresh} />)}</div>
+          ) : (
+            <Card className="rounded-3xl border-dashed shadow-none">
+              <CardContent className="space-y-3 p-10 text-center">
+                <p className="site-display text-xl">No bookings yet</p>
+                <p className="text-sm text-muted-foreground">Pick a date and a cottage to book.</p>
+                <Button asChild className="rounded-full"><Link to="/">Find a cottage</Link></Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-      <p className="text-sm text-neutral-500">{session.user.email}</p>
-      <div className="mt-4 space-y-3">
-        {list.isLoading ? <Spinner /> : list.data?.length ? list.data.map((b) => <BookingCard key={b.id} b={b} highlight={b.id === fresh} />) : (
-          <Empty title="No bookings yet" hint="Pick a date and a cottage to book." />
-        )}
-      </div>
-      {!list.data?.length && !list.isLoading && <Link to="/" className="mt-4 block text-center text-sm font-medium underline">Book a cottage</Link>}
-    </GuestShell>
+    </PublicShell>
   );
 }
 
-function BookingCard({ b, highlight }: { b: Row; highlight: boolean }) {
+function TripCard({ b, highlight }: { b: Row; highlight: boolean }) {
   const settings = useSettings().data;
   const dp = b.payments.find((p) => p.kind === "downpayment" && p.status !== "rejected");
   const needsReceipt = b.status === "pending" && !dp;
+  const rejected = b.payments.some((p) => p.status === "rejected") && needsReceipt;
   return (
-    <Card className={highlight ? "ring-2 ring-neutral-900" : ""}>
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs text-neutral-500">{b.code}</p>
-          <h3 className="font-semibold">{b.cottages.cottage_types.name} · {b.cottages.name}</h3>
-          <p className="text-sm text-neutral-600">{niceDate(b.stay_date)} · {SLOT_LABEL[b.slot]} · {slotTimes(settings, b.slot)}</p>
-          <p className="text-sm text-neutral-600">{b.pax_adults} adults{b.pax_children ? `, ${b.pax_children} kids` : ""} · estimate {money(b.estimate)}</p>
+    <Card className={cn("rounded-3xl border-border/70 shadow-level-2", highlight && "ring-2 ring-primary")}>
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div className="flex gap-4">
+          <PhotoTile name={b.cottages.cottage_types.name} className="size-20 shrink-0 rounded-2xl" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <p className="malaya-eyebrow">{b.code}</p>
+              <StatusPill status={dp?.status === "submitted" ? "pending" : b.status} />
+            </div>
+            <p className="site-display text-lg">{b.cottages.cottage_types.name} · {b.cottages.name}</p>
+            <p className="text-sm text-muted-foreground">{niceDate(b.stay_date, { weekday: "short", month: "long", day: "numeric" })} · {SLOT_LABEL[b.slot]}</p>
+            <p className="text-xs text-muted-foreground">{slotTimes(settings, b.slot)} · {b.pax_adults + b.pax_children} guests · estimate {php(b.estimate)}</p>
+          </div>
         </div>
-        <Badge tone={statusTone(b.status)}>{dp?.status === "submitted" ? "Receipt sent" : STATUS_LABEL[b.status]}</Badge>
-      </div>
-
-      {needsReceipt && (
-        <div className="mt-4 rounded-2xl bg-amber-50 p-3 text-sm">
-          <p className="font-medium text-amber-900">Send {money(b.cottages.cottage_types.downpayment)} to keep this booking{b.hold_until ? ` — held until ${niceTime(b.hold_until)}` : ""}.</p>
-          <p className="mt-2 text-amber-900">GCash: {settings?.gcash_number} ({settings?.gcash_name})</p>
-          <p className="text-amber-900">{settings?.bank_name}: {settings?.bank_account_number} ({settings?.bank_account_name})</p>
-          <ReceiptForm booking={b} />
-        </div>
-      )}
-      {dp?.status === "submitted" && <p className="mt-3 text-sm text-neutral-500">We got your receipt. Staff will confirm it shortly.</p>}
-      {b.payments.some((p) => p.status === "rejected") && b.status === "pending" && !dp && (
-        <p className="mt-2 text-sm text-red-600">Your last receipt couldn't be verified. Please send it again or message us.</p>
-      )}
+        {dp?.status === "submitted" && <p className="rounded-2xl bg-secondary/70 p-3 text-sm">We got your receipt. Staff will confirm it shortly.</p>}
+        {needsReceipt && (
+          <div className="space-y-3 rounded-2xl border border-warning/30 bg-warning/8 p-4 text-sm">
+            <p className="font-medium">Send {php(b.cottages.cottage_types.downpayment)} to keep this booking{b.hold_until ? ` — held until ${niceTime(b.hold_until)}` : ""}.</p>
+            {rejected && <p className="text-destructive">Your last receipt couldn't be verified. Please send it again or message us.</p>}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-xl bg-card p-3"><p className="malaya-eyebrow">GCash</p><p className="font-medium">{settings?.gcash_number}</p><p className="text-xs text-muted-foreground">{settings?.gcash_name}</p></div>
+              <div className="rounded-xl bg-card p-3"><p className="malaya-eyebrow">{settings?.bank_name || "Bank"}</p><p className="font-medium">{settings?.bank_account_number}</p><p className="text-xs text-muted-foreground">{settings?.bank_account_name}</p></div>
+            </div>
+            <ReceiptForm booking={b} />
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -99,36 +117,32 @@ function ReceiptForm({ booking }: { booking: Row }) {
   const [ref, setRef] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
-
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    if (!file) return toast.error("Attach the receipt screenshot");
+  async function send() {
+    if (!file) return void toast.error("Attach the receipt screenshot");
     setBusy(true);
     try {
       const path = await uploadReceipt(session!.user.id, file);
       await rpc("submit_receipt", { p_booking: booking.id, p_path: path, p_method: method, p_amount: booking.cottages.cottage_types.downpayment, p_reference: ref });
       toast.success("Receipt sent");
       qc.invalidateQueries({ queryKey: ["my-bookings"] });
-    } catch (err) {
-      toast.error((err as Error).message);
+    } catch (e) {
+      toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
-
   return (
-    <form onSubmit={send} className="mt-3 space-y-2">
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="Paid by">
-          <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-            <option value="gcash">{METHOD_LABEL.gcash}</option>
-            <option value="bank">{METHOD_LABEL.bank}</option>
-          </Select>
-        </Field>
-        <Field label="Reference no."><Input value={ref} onChange={(e) => setRef(e.target.value)} /></Field>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-1.5">
+        <Label>Paid by</Label>
+        <Select value={method} onValueChange={setMethod}>
+          <SelectTrigger className="bg-card"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="gcash">GCash</SelectItem><SelectItem value="bank">Bank transfer</SelectItem></SelectContent>
+        </Select>
       </div>
-      <Input type="file" accept="image/*" className="h-auto py-2" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-      <Button type="submit" className="w-full" disabled={busy}><Icon icon={Upload01Icon} size={18} /> {busy ? "Sending…" : "Send receipt"}</Button>
-    </form>
+      <div className="space-y-1.5"><Label htmlFor={`rf-${booking.id}`}>Reference no.</Label><Input id={`rf-${booking.id}`} className="bg-card" value={ref} onChange={(e) => setRef(e.target.value)} /></div>
+      <Input type="file" accept="image/*" className="bg-card sm:col-span-2" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      <Button className="rounded-full sm:col-span-2" disabled={busy} onClick={send}><Upload className="size-4" /> {busy ? "Sending…" : "Send receipt"}</Button>
+    </div>
   );
 }

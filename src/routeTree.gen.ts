@@ -10,22 +10,38 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyRouteImport } from './routes/my'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCalendarRouteImport } from './routes/admin.calendar'
-import { Route as AdminFinanceRouteImport } from './routes/admin.finance'
 import { Route as AdminInboxRouteImport } from './routes/admin.inbox'
-import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminTeamRouteImport } from './routes/admin.team'
+import { Route as CottagesTypeIdRouteImport } from './routes/cottages.$typeId'
 import { Route as AdminBookingsIndexRouteImport } from './routes/admin.bookings.index'
 import { Route as AdminBookingsIdRouteImport } from './routes/admin.bookings.$id'
+import { Route as AdminBookingsGuestsRouteImport } from './routes/admin.bookings.guests'
+import { Route as AdminBookingsRequestsRouteImport } from './routes/admin.bookings.requests'
+import { Route as AdminBookingsTodayRouteImport } from './routes/admin.bookings.today'
+import { Route as AdminFinanceIndexRouteImport } from './routes/admin.finance.index'
+import { Route as AdminFinanceCloseRouteImport } from './routes/admin.finance.close'
+import { Route as AdminFinanceCottagesRouteImport } from './routes/admin.finance.cottages'
+import { Route as AdminFinanceExpensesRouteImport } from './routes/admin.finance.expenses'
+import { Route as AdminSettingsIndexRouteImport } from './routes/admin.settings.index'
+import { Route as AdminSettingsCottagesRouteImport } from './routes/admin.settings.cottages'
+import { Route as AdminSettingsPaymentsRouteImport } from './routes/admin.settings.payments'
+import { Route as AdminSettingsQuickRepliesRouteImport } from './routes/admin.settings.quick-replies'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -58,25 +74,20 @@ const AdminCalendarRoute = AdminCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminFinanceRoute = AdminFinanceRouteImport.update({
-  id: '/finance',
-  path: '/finance',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminInboxRoute = AdminInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTeamRoute = AdminTeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => AdminRoute,
+} as any)
+const CottagesTypeIdRoute = CottagesTypeIdRouteImport.update({
+  id: '/cottages/$typeId',
+  path: '/cottages/$typeId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminBookingsIndexRoute = AdminBookingsIndexRouteImport.update({
   id: '/bookings/',
@@ -88,105 +99,229 @@ const AdminBookingsIdRoute = AdminBookingsIdRouteImport.update({
   path: '/bookings/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBookingsGuestsRoute = AdminBookingsGuestsRouteImport.update({
+  id: '/bookings/guests',
+  path: '/bookings/guests',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsRequestsRoute = AdminBookingsRequestsRouteImport.update({
+  id: '/bookings/requests',
+  path: '/bookings/requests',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBookingsTodayRoute = AdminBookingsTodayRouteImport.update({
+  id: '/bookings/today',
+  path: '/bookings/today',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFinanceIndexRoute = AdminFinanceIndexRouteImport.update({
+  id: '/finance/',
+  path: '/finance/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFinanceCloseRoute = AdminFinanceCloseRouteImport.update({
+  id: '/finance/close',
+  path: '/finance/close',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFinanceCottagesRoute = AdminFinanceCottagesRouteImport.update({
+  id: '/finance/cottages',
+  path: '/finance/cottages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFinanceExpensesRoute = AdminFinanceExpensesRouteImport.update({
+  id: '/finance/expenses',
+  path: '/finance/expenses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsCottagesRoute = AdminSettingsCottagesRouteImport.update({
+  id: '/settings/cottages',
+  path: '/settings/cottages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsPaymentsRoute = AdminSettingsPaymentsRouteImport.update({
+  id: '/settings/payments',
+  path: '/settings/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsQuickRepliesRoute =
+  AdminSettingsQuickRepliesRouteImport.update({
+    id: '/settings/quick-replies',
+    path: '/settings/quick-replies',
+    getParentRoute: () => AdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/book': typeof BookRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRoute
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/finance': typeof AdminFinanceRoute
   '/admin/inbox': typeof AdminInboxRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/admin/team': typeof AdminTeamRoute
+  '/cottages/$typeId': typeof CottagesTypeIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/bookings/guests': typeof AdminBookingsGuestsRoute
+  '/admin/bookings/requests': typeof AdminBookingsRequestsRoute
+  '/admin/bookings/today': typeof AdminBookingsTodayRoute
+  '/admin/finance/close': typeof AdminFinanceCloseRoute
+  '/admin/finance/cottages': typeof AdminFinanceCottagesRoute
+  '/admin/finance/expenses': typeof AdminFinanceExpensesRoute
+  '/admin/settings/cottages': typeof AdminSettingsCottagesRoute
+  '/admin/settings/payments': typeof AdminSettingsPaymentsRoute
+  '/admin/settings/quick-replies': typeof AdminSettingsQuickRepliesRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
+  '/admin/finance/': typeof AdminFinanceIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/book': typeof BookRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRoute
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/finance': typeof AdminFinanceRoute
   '/admin/inbox': typeof AdminInboxRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/admin/team': typeof AdminTeamRoute
+  '/cottages/$typeId': typeof CottagesTypeIdRoute
   '/admin': typeof AdminIndexRoute
   '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/bookings/guests': typeof AdminBookingsGuestsRoute
+  '/admin/bookings/requests': typeof AdminBookingsRequestsRoute
+  '/admin/bookings/today': typeof AdminBookingsTodayRoute
+  '/admin/finance/close': typeof AdminFinanceCloseRoute
+  '/admin/finance/cottages': typeof AdminFinanceCottagesRoute
+  '/admin/finance/expenses': typeof AdminFinanceExpensesRoute
+  '/admin/settings/cottages': typeof AdminSettingsCottagesRoute
+  '/admin/settings/payments': typeof AdminSettingsPaymentsRoute
+  '/admin/settings/quick-replies': typeof AdminSettingsQuickRepliesRoute
   '/admin/bookings': typeof AdminBookingsIndexRoute
+  '/admin/finance': typeof AdminFinanceIndexRoute
+  '/admin/settings': typeof AdminSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/book': typeof BookRoute
   '/login': typeof LoginRoute
   '/my': typeof MyRoute
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/finance': typeof AdminFinanceRoute
   '/admin/inbox': typeof AdminInboxRoute
-  '/admin/settings': typeof AdminSettingsRoute
   '/admin/team': typeof AdminTeamRoute
+  '/cottages/$typeId': typeof CottagesTypeIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/bookings/guests': typeof AdminBookingsGuestsRoute
+  '/admin/bookings/requests': typeof AdminBookingsRequestsRoute
+  '/admin/bookings/today': typeof AdminBookingsTodayRoute
+  '/admin/finance/close': typeof AdminFinanceCloseRoute
+  '/admin/finance/cottages': typeof AdminFinanceCottagesRoute
+  '/admin/finance/expenses': typeof AdminFinanceExpensesRoute
+  '/admin/settings/cottages': typeof AdminSettingsCottagesRoute
+  '/admin/settings/payments': typeof AdminSettingsPaymentsRoute
+  '/admin/settings/quick-replies': typeof AdminSettingsQuickRepliesRoute
   '/admin/bookings/': typeof AdminBookingsIndexRoute
+  '/admin/finance/': typeof AdminFinanceIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/admin'
     | '/book'
     | '/login'
     | '/my'
     | '/admin/calendar'
-    | '/admin/finance'
     | '/admin/inbox'
-    | '/admin/settings'
     | '/admin/team'
+    | '/cottages/$typeId'
     | '/admin/'
     | '/admin/bookings/$id'
+    | '/admin/bookings/guests'
+    | '/admin/bookings/requests'
+    | '/admin/bookings/today'
+    | '/admin/finance/close'
+    | '/admin/finance/cottages'
+    | '/admin/finance/expenses'
+    | '/admin/settings/cottages'
+    | '/admin/settings/payments'
+    | '/admin/settings/quick-replies'
     | '/admin/bookings/'
+    | '/admin/finance/'
+    | '/admin/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/book'
     | '/login'
     | '/my'
     | '/admin/calendar'
-    | '/admin/finance'
     | '/admin/inbox'
-    | '/admin/settings'
     | '/admin/team'
+    | '/cottages/$typeId'
     | '/admin'
     | '/admin/bookings/$id'
+    | '/admin/bookings/guests'
+    | '/admin/bookings/requests'
+    | '/admin/bookings/today'
+    | '/admin/finance/close'
+    | '/admin/finance/cottages'
+    | '/admin/finance/expenses'
+    | '/admin/settings/cottages'
+    | '/admin/settings/payments'
+    | '/admin/settings/quick-replies'
     | '/admin/bookings'
+    | '/admin/finance'
+    | '/admin/settings'
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/admin'
     | '/book'
     | '/login'
     | '/my'
     | '/admin/calendar'
-    | '/admin/finance'
     | '/admin/inbox'
-    | '/admin/settings'
     | '/admin/team'
+    | '/cottages/$typeId'
     | '/admin/'
     | '/admin/bookings/$id'
+    | '/admin/bookings/guests'
+    | '/admin/bookings/requests'
+    | '/admin/bookings/today'
+    | '/admin/finance/close'
+    | '/admin/finance/cottages'
+    | '/admin/finance/expenses'
+    | '/admin/settings/cottages'
+    | '/admin/settings/payments'
+    | '/admin/settings/quick-replies'
     | '/admin/bookings/'
+    | '/admin/finance/'
+    | '/admin/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   BookRoute: typeof BookRoute
   LoginRoute: typeof LoginRoute
   MyRoute: typeof MyRoute
+  CottagesTypeIdRoute: typeof CottagesTypeIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -196,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -240,25 +382,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCalendarRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/finance': {
-      id: '/admin/finance'
-      path: '/finance'
-      fullPath: '/admin/finance'
-      preLoaderRoute: typeof AdminFinanceRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/inbox': {
       id: '/admin/inbox'
       path: '/inbox'
       fullPath: '/admin/inbox'
       preLoaderRoute: typeof AdminInboxRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/settings': {
-      id: '/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/team': {
@@ -267,6 +395,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/team'
       preLoaderRoute: typeof AdminTeamRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/cottages/$typeId': {
+      id: '/cottages/$typeId'
+      path: '/cottages/$typeId'
+      fullPath: '/cottages/$typeId'
+      preLoaderRoute: typeof CottagesTypeIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/bookings/': {
       id: '/admin/bookings/'
@@ -282,39 +417,136 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBookingsIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/bookings/guests': {
+      id: '/admin/bookings/guests'
+      path: '/bookings/guests'
+      fullPath: '/admin/bookings/guests'
+      preLoaderRoute: typeof AdminBookingsGuestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings/requests': {
+      id: '/admin/bookings/requests'
+      path: '/bookings/requests'
+      fullPath: '/admin/bookings/requests'
+      preLoaderRoute: typeof AdminBookingsRequestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bookings/today': {
+      id: '/admin/bookings/today'
+      path: '/bookings/today'
+      fullPath: '/admin/bookings/today'
+      preLoaderRoute: typeof AdminBookingsTodayRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/finance/': {
+      id: '/admin/finance/'
+      path: '/finance'
+      fullPath: '/admin/finance/'
+      preLoaderRoute: typeof AdminFinanceIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/finance/close': {
+      id: '/admin/finance/close'
+      path: '/finance/close'
+      fullPath: '/admin/finance/close'
+      preLoaderRoute: typeof AdminFinanceCloseRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/finance/cottages': {
+      id: '/admin/finance/cottages'
+      path: '/finance/cottages'
+      fullPath: '/admin/finance/cottages'
+      preLoaderRoute: typeof AdminFinanceCottagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/finance/expenses': {
+      id: '/admin/finance/expenses'
+      path: '/finance/expenses'
+      fullPath: '/admin/finance/expenses'
+      preLoaderRoute: typeof AdminFinanceExpensesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/': {
+      id: '/admin/settings/'
+      path: '/settings'
+      fullPath: '/admin/settings/'
+      preLoaderRoute: typeof AdminSettingsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/cottages': {
+      id: '/admin/settings/cottages'
+      path: '/settings/cottages'
+      fullPath: '/admin/settings/cottages'
+      preLoaderRoute: typeof AdminSettingsCottagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/payments': {
+      id: '/admin/settings/payments'
+      path: '/settings/payments'
+      fullPath: '/admin/settings/payments'
+      preLoaderRoute: typeof AdminSettingsPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/quick-replies': {
+      id: '/admin/settings/quick-replies'
+      path: '/settings/quick-replies'
+      fullPath: '/admin/settings/quick-replies'
+      preLoaderRoute: typeof AdminSettingsQuickRepliesRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
   AdminCalendarRoute: typeof AdminCalendarRoute
-  AdminFinanceRoute: typeof AdminFinanceRoute
   AdminInboxRoute: typeof AdminInboxRoute
-  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTeamRoute: typeof AdminTeamRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBookingsIdRoute: typeof AdminBookingsIdRoute
+  AdminBookingsGuestsRoute: typeof AdminBookingsGuestsRoute
+  AdminBookingsRequestsRoute: typeof AdminBookingsRequestsRoute
+  AdminBookingsTodayRoute: typeof AdminBookingsTodayRoute
+  AdminFinanceCloseRoute: typeof AdminFinanceCloseRoute
+  AdminFinanceCottagesRoute: typeof AdminFinanceCottagesRoute
+  AdminFinanceExpensesRoute: typeof AdminFinanceExpensesRoute
+  AdminSettingsCottagesRoute: typeof AdminSettingsCottagesRoute
+  AdminSettingsPaymentsRoute: typeof AdminSettingsPaymentsRoute
+  AdminSettingsQuickRepliesRoute: typeof AdminSettingsQuickRepliesRoute
   AdminBookingsIndexRoute: typeof AdminBookingsIndexRoute
+  AdminFinanceIndexRoute: typeof AdminFinanceIndexRoute
+  AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCalendarRoute: AdminCalendarRoute,
-  AdminFinanceRoute: AdminFinanceRoute,
   AdminInboxRoute: AdminInboxRoute,
-  AdminSettingsRoute: AdminSettingsRoute,
   AdminTeamRoute: AdminTeamRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminBookingsIdRoute: AdminBookingsIdRoute,
+  AdminBookingsGuestsRoute: AdminBookingsGuestsRoute,
+  AdminBookingsRequestsRoute: AdminBookingsRequestsRoute,
+  AdminBookingsTodayRoute: AdminBookingsTodayRoute,
+  AdminFinanceCloseRoute: AdminFinanceCloseRoute,
+  AdminFinanceCottagesRoute: AdminFinanceCottagesRoute,
+  AdminFinanceExpensesRoute: AdminFinanceExpensesRoute,
+  AdminSettingsCottagesRoute: AdminSettingsCottagesRoute,
+  AdminSettingsPaymentsRoute: AdminSettingsPaymentsRoute,
+  AdminSettingsQuickRepliesRoute: AdminSettingsQuickRepliesRoute,
   AdminBookingsIndexRoute: AdminBookingsIndexRoute,
+  AdminFinanceIndexRoute: AdminFinanceIndexRoute,
+  AdminSettingsIndexRoute: AdminSettingsIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   BookRoute: BookRoute,
   LoginRoute: LoginRoute,
   MyRoute: MyRoute,
+  CottagesTypeIdRoute: CottagesTypeIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
