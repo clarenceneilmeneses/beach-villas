@@ -32,7 +32,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth, useStaff } from "@/lib/auth";
-import { useSettings } from "@/lib/data";
+import { shortName, useSettings } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { BookingDialog, useBookingDialog } from "./booking-dialog";
@@ -153,7 +153,7 @@ function useTabs() {
 }
 
 function Wordmark({ compact = false }: { compact?: boolean }) {
-  const name = useSettings().data?.resort_name ?? "Beach Villas";
+  const name = shortName(useSettings().data);
   if (compact) return <p className="font-display text-lg tracking-[0.12em] text-sidebar-foreground" aria-hidden>{name[0]}</p>;
   return (
     <div className="leading-tight">

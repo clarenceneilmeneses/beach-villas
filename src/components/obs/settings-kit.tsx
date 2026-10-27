@@ -48,7 +48,9 @@ export function useSettingsForm(s: Settings | null | undefined) {
   const save = async () => {
     if (!f) return;
     setBusy(true);
-    const { error } = await supabase.from("settings").update(f).eq("id", 1);
+    // A cleared map pin is null, not "".
+    const row = { ...f, ...("map_lat" in f && { map_lat: f.map_lat === "" ? null : f.map_lat, map_lng: f.map_lng === "" ? null : f.map_lng }) };
+    const { error } = await supabase.from("settings").update(row).eq("id", 1);
     setBusy(false);
     if (error) return void toast.error(error.message);
     toast.success("Saved");

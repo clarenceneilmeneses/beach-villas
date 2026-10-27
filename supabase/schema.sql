@@ -29,7 +29,10 @@ create table public.settings (
   messenger_url text default '',
   whatsapp_number text default '',
   viber_number text default '',
-  facebook_url text default ''
+  facebook_url text default '',
+  short_name text default '',      -- the wordmark when the full name is long
+  map_lat numeric(9,6),           -- the About page map pin
+  map_lng numeric(9,6)
 );
 
 create table public.cottage_types (

@@ -23,6 +23,15 @@ function General() {
           <Field id="rn" label="Resort name" {...bind("resort_name")} />
           <Field id="tl" label="Tagline" {...bind("tagline")} />
           <Field id="ad" label="Address" {...bind("address")} />
+          {"short_name" in f && (
+            <>
+              <Field id="sn" label="Short name" placeholder="For the logo when the full name is long" {...bind("short_name")} />
+              <div className="grid grid-cols-2 gap-4">
+                <Field id="la" label="Map latitude" inputMode="decimal" placeholder="14.274135" {...bind("map_lat")} />
+                <Field id="lo" label="Map longitude" inputMode="decimal" placeholder="120.734924" {...bind("map_lng")} />
+              </div>
+            </>
+          )}
         </SettingsCard>
         <SettingsCard title="Slot times" hint="An overnight or 22-hour stay ends the next day.">
           <div className="grid grid-cols-2 gap-4">

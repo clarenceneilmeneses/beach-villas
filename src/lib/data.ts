@@ -24,6 +24,9 @@ export type Settings = {
   whatsapp_number: string;
   viber_number: string;
   facebook_url: string;
+  short_name?: string | null;
+  map_lat?: number | string | null;
+  map_lng?: number | string | null;
   gcash_qr_path?: string | null;
   bank_qr_path?: string | null;
 };
@@ -83,6 +86,9 @@ export type Payment = {
   created_at: string;
   edited: boolean;
 };
+
+/** The wordmark: the short name when there is one, else the full name. */
+export const shortName = (s: Settings | null | undefined) => s?.short_name || s?.resort_name || "Beach Villas";
 
 export function useSettings() {
   return useQuery({

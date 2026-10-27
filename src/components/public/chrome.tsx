@@ -27,7 +27,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
 import { GuestBell } from "@/components/notification-bell";
-import { useSettings } from "@/lib/data";
+import { shortName, useSettings } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
  * button beside it does the rest. The footer is Explore's only.
  */
 export function Wordmark({ className }: { className?: string }) {
-  const name = useSettings().data?.resort_name ?? "Beach Villas";
+  const name = shortName(useSettings().data);
   return (
     <Link to="/" className={cn("whitespace-nowrap font-display text-[22px] uppercase leading-none tracking-[0.08em] text-foreground sm:text-[26px]", className)}>
       {name}
