@@ -156,7 +156,7 @@ function TodayMoney() {
         supabase.from("payments").select("amount, method, kind").eq("status", "verified").gte("created_at", manilaDayStart(today)),
         supabase.from("bookings").select("estimate, final_amount").eq("status", "settled").gte("checked_out_at", manilaDayStart(today)),
       ]);
-      const by: Record<string, number> = { cash: 0, gcash: 0, bank: 0 };
+      const by: Record<string, number> = { cash: 0, qrph: 0, gcash: 0, bank: 0 };
       for (const p of pay.data ?? []) by[p.method] = (by[p.method] ?? 0) + (p.kind === "refund" ? -1 : 1) * Number(p.amount);
       const discount = (settled.data ?? []).reduce((s, b) => s + Math.max(0, Number(b.estimate) - Number(b.final_amount ?? 0)), 0);
       return { by, total: Object.values(by).reduce((a, b) => a + b, 0), discount };
@@ -171,10 +171,10 @@ function TodayMoney() {
           <p className="malaya-eyebrow">Collected today</p>
           <p className="font-display text-[28px] leading-tight">{php(d?.total)}</p>
           <div className="grid grid-cols-3 gap-2 text-center">
-            {(["cash", "gcash", "bank"] as const).map((m) => (
+            {(["cash", "qrph", "gcash"] as const).map((m) => (
               <div key={m} className="rounded-lg bg-secondary/70 px-2 py-1.5">
-                <p className="text-[10px] uppercase text-muted-foreground">{METHOD_LABEL[m]}</p>
-                <p className="text-sm font-semibold tabular-nums">{php(d?.by[m])}</p>
+                <p className="text-[10px] uppercase text-muted-foreground">{m === "gcash" ? "GCash/bank" : METHOD_LABEL[m]}</p>
+                <p className="text-sm font-semibold tabular-nums">{php(m === "gcash" ? (d?.by.gcash ?? 0) + (d?.by.bank ?? 0) : d?.by[m])}</p>
               </div>
             ))}
           </div>

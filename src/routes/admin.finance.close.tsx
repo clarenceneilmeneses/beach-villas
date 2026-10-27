@@ -16,7 +16,7 @@ import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/finance/close")({ component: () => <OwnerOnly><DailyClose /></OwnerOnly> });
 
-const METHODS = ["cash", "gcash", "bank"] as const;
+const METHODS = ["cash", "qrph", "gcash", "bank"] as const;
 
 function DailyClose() {
   const today = manilaToday();
@@ -50,7 +50,7 @@ function DailyClose() {
   return (
     <div className="space-y-6">
       <SectionHeading eyebrow={niceDate(today, { weekday: "long", month: "long", day: "numeric" })} title="Daily close" />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {METHODS.map((m) => <KpiCard key={m} label={METHOD_LABEL[m]!} value={php(sum(m))} sub={m === "cash" ? "Should be in the drawer" : "Check against the app"} />)}
       </div>
 

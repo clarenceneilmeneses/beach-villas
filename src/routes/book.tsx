@@ -2,11 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Minus, Pencil, Plus, ShieldCheck } from "@/components/icons";
+import { ArrowLeft, Hourglass, Minus, Pencil, Plus, ShieldCheck } from "@/components/icons";
 import { useNavPillAway } from "@/components/nav-pill";
 import { PhotoTile, PublicShell } from "@/components/public/chrome";
 import { AuthPanel } from "@/components/public/auth-panel";
-import { MethodPicker, PayDetails, ReceiptPicker, type Method } from "@/components/public/pay-panel";
+import { PayDetails, ReceiptPicker, submitReceipt } from "@/components/public/pay-panel";
 import { stayParams, withDefaults } from "@/components/public/search-pill";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/book")({
 const QUESTIONS: { n: Step; title: string; lead: string }[] = [
   { n: 1, title: "Here's your trip", lead: "Check the date, the stay and the headcount before we go on." },
   { n: 2, title: "Who's booking?", lead: "The name on your ID, and a number we can reach." },
-  { n: 3, title: "Pay the downpayment", lead: "Scan the QR, pay, then upload the receipt. It confirms your cottage." },
+  { n: 3, title: "Pay the downpayment", lead: "Scan the QR Ph code with any bank or e-wallet, pay the downpayment, then upload the receipt." },
   { n: 4, title: "Everything look right?", lead: "Reserve sends your booking and receipt to the resort." },
 ];
 
@@ -54,7 +54,6 @@ function Book() {
 
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
-  const [method, setMethod] = useState<Method>("gcash");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ id: string; code: string; cottage: string } | null>(null);
@@ -79,7 +78,7 @@ function Book() {
       });
       try {
         const path = await uploadReceipt(session!.user.id, file);
-        await rpc("submit_receipt", { p_booking: r.id, p_path: path, p_method: method, p_amount: t.downpayment, p_reference: "" });
+        await submitReceipt(r.id, path, Number(t.downpayment));
       } catch (e) {
         // The cottage is held; the receipt can be sent again from My bookings.
         toast.error(`Booked, but the receipt didn't upload: ${(e as Error).message}. Send it from My bookings.`);
@@ -141,8 +140,7 @@ function Book() {
                   )}
                   {step === 3 && t && (
                     <div className="space-y-5">
-                      <MethodPicker value={method} onChange={setMethod} />
-                      <PayDetails method={method} amount={Number(t.downpayment)} />
+                      <PayDetails amount={Number(t.downpayment)} />
                       <ReceiptPicker file={file} onChange={setFile} />
                     </div>
                   )}
@@ -152,7 +150,7 @@ function Book() {
                       <Review k="Date" v={`${niceDate(q.date, { weekday: "long", month: "long", day: "numeric" })} · ${slotTimes(settings, q.slot)}`} onEdit={() => goTo(1)} />
                       <Review k="Guests" v={`${q.adults} adults${q.children ? `, ${q.children} kids` : ""}`} onEdit={() => goTo(1)} />
                       <Review k="Booking for" v={`${name} · ${mobile}`} onEdit={() => goTo(2)} />
-                      <Review k="Downpayment" v={`${php(t.downpayment)} by ${method === "gcash" ? "GCash" : "bank transfer"} · receipt attached`} onEdit={() => goTo(3)} />
+                      <Review k="Downpayment" v={`${php(t.downpayment)} by QR Ph · receipt attached`} onEdit={() => goTo(3)} />
                     </div>
                   )}
                 </div>
@@ -319,12 +317,15 @@ function Confirmed({ done, t, date, slot }: { done: { id: string; code: string; 
   return (
     <PublicShell hideFooter>
       <div className="mx-auto max-w-lg px-4 py-12 text-center sm:px-8">
-        <CheckCircle2 className="mx-auto size-12 text-success" />
-        <h1 className="site-display mt-4 text-3xl">You're booked in</h1>
+        <Hourglass className="mx-auto size-12 text-warning" />
+        <h1 className="site-display mt-4 text-3xl">Booking received</h1>
         <p className="mt-2 text-muted-foreground">
           {done.cottage} · {niceDate(date, { weekday: "long", month: "long", day: "numeric" })} · {SLOT_LABEL[slot]}
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">Booking {done.code}. Staff will check your {php(t?.downpayment)} receipt and confirm it — watch your messages.</p>
+        <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-warning/30 bg-warning/[0.08] p-4 text-left text-sm">
+          <p className="font-medium">Not confirmed yet — we're checking your receipt</p>
+          <p className="mt-1 text-muted-foreground">Booking {done.code}. The front desk checks the {php(t?.downpayment)} payment against the receipt. Once it's verified, your booking turns Confirmed in My bookings and we message you here. Your cottage is held meanwhile.</p>
+        </div>
         <div className="mt-6 flex justify-center gap-2">
           <Button asChild className="rounded-full"><Link to="/my" search={{ new: done.id }}>My bookings</Link></Button>
           <Button asChild variant="outline" className="rounded-full"><Link to="/messages">Message the resort</Link></Button>

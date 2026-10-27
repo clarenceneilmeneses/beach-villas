@@ -110,7 +110,7 @@ function Reservations() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-right text-sm tabular-nums">{php(b.final_amount ?? b.estimate)}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{php(collectedOf(b))}</TableCell>
-                      <TableCell><StatusPill status={b.status} checkedOut={!!b.checked_out_at} /></TableCell>
+                      <TableCell><StatusPill status={b.status} checkedOut={!!b.checked_out_at} verifying={b.payments?.some((p) => p.status === "submitted")} /></TableCell>
                       <TableCell className="max-w-[160px] truncate text-xs text-muted-foreground">{b.created_by}</TableCell>
                       <TableCell>
                         <Link to="/admin/bookings/$id" params={{ id: b.id }} className="link-action inline-flex items-center gap-1 text-xs font-semibold">

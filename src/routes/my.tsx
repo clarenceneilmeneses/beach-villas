@@ -8,7 +8,7 @@ import { PhotoTile, PublicShell } from "@/components/public/chrome";
 import { AuthPanel } from "@/components/public/auth-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MethodPicker, PayDetails, ReceiptPicker, type Method } from "@/components/public/pay-panel";
+import { PayDetails, ReceiptPicker, submitReceipt } from "@/components/public/pay-panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 import { slotTimes, useSettings, type Booking, type Payment } from "@/lib/data";
@@ -84,14 +84,14 @@ function TripCard({ b, highlight }: { b: Row; highlight: boolean }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <p className="malaya-eyebrow">{b.code}</p>
-              <StatusPill status={dp?.status === "submitted" ? "pending" : b.status} />
+              <StatusPill status={b.status} verifying={dp?.status === "submitted"} />
             </div>
             <p className="site-display text-lg">{b.cottages.cottage_types.name} · {b.cottages.name}</p>
             <p className="text-sm text-muted-foreground">{niceDate(b.stay_date, { weekday: "short", month: "long", day: "numeric" })} · {SLOT_LABEL[b.slot]}</p>
             <p className="text-xs text-muted-foreground">{slotTimes(settings, b.slot)} · {b.pax_adults + b.pax_children} guests · estimate {php(b.estimate)}</p>
           </div>
         </div>
-        {dp?.status === "submitted" && <p className="rounded-2xl bg-secondary/70 p-3 text-sm">We got your receipt. Staff will confirm it shortly.</p>}
+        {dp?.status === "submitted" && <p className="rounded-2xl border border-warning/30 bg-warning/[0.08] p-3 text-sm">We got your receipt. <span className="font-medium">It isn't confirmed until the front desk verifies the payment</span> — we'll message you when it is.</p>}
         {needsReceipt && (
           <div className="space-y-3 rounded-2xl border border-warning/30 bg-warning/[0.06] p-4 text-sm">
             <p className="font-medium">Send {php(b.cottages.cottage_types.downpayment)} to keep this booking{b.hold_until ? ` — held until ${niceTime(b.hold_until)}` : ""}.</p>
@@ -107,7 +107,6 @@ function TripCard({ b, highlight }: { b: Row; highlight: boolean }) {
 function ReceiptForm({ booking }: { booking: Row }) {
   const { session } = useAuth();
   const qc = useQueryClient();
-  const [method, setMethod] = useState<Method>("gcash");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const amount = Number(booking.cottages.cottage_types.downpayment);
@@ -116,7 +115,7 @@ function ReceiptForm({ booking }: { booking: Row }) {
     setBusy(true);
     try {
       const path = await uploadReceipt(session!.user.id, file);
-      await rpc("submit_receipt", { p_booking: booking.id, p_path: path, p_method: method, p_amount: amount, p_reference: "" });
+      await submitReceipt(booking.id, path, amount);
       toast.success("Receipt sent");
       qc.invalidateQueries({ queryKey: ["my-bookings"] });
     } catch (e) {
@@ -127,8 +126,7 @@ function ReceiptForm({ booking }: { booking: Row }) {
   }
   return (
     <div className="space-y-4">
-      <MethodPicker value={method} onChange={setMethod} />
-      <PayDetails method={method} amount={amount} />
+      <PayDetails amount={amount} />
       <ReceiptPicker file={file} onChange={setFile} />
       <Button className="w-full rounded-full" disabled={busy || !file} onClick={send}><Upload className="size-4" /> {busy ? "Sending…" : "Send receipt"}</Button>
     </div>

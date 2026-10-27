@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useStaff } from "@/lib/auth";
 import { useCottages, useCottageTypes, useSettings, type Settings } from "@/lib/data";
 import { scopedCottages, useFilters } from "@/lib/filters";
-import { addDays, manilaToday, niceDate, php, SLOT_LABEL, type Slot } from "@/lib/format";
+import { addDays, manilaToday, niceDate, niceTime, php, SLOT_LABEL, type Slot } from "@/lib/format";
 import { rpc, supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -101,6 +101,23 @@ const shiftMonth = (key: string, n: number) => {
   d.setUTCMonth(d.getUTCMonth() + n);
   return d.toISOString().slice(0, 7);
 };
+
+/** The fill for a booked half: pending amber, in house green, blocked grey, booked ink. */
+const tone = (b: CalBooking) =>
+  b.status === "blocked"
+    ? "bg-muted text-muted-foreground line-through"
+    : b.status === "pending"
+      ? "bg-warning/25 text-foreground"
+      : b.status === "checked_in" && !b.checked_out_at
+        ? "bg-success/20 text-foreground"
+        : "bg-foreground text-background";
+
+/** One stay over both halves is drawn as one block, not two chips that read as two guests. */
+function tileBlocks(halves: { h: "day" | "night"; b: CalBooking | undefined }[]) {
+  const [day, night] = [halves[0]!.b, halves[1]!.b];
+  if (day && night && day.id === night.id) return [{ key: "both", b: day, half: null as "day" | "night" | null }];
+  return halves.map(({ h, b }) => ({ key: h, b, half: h as "day" | "night" | null }));
+}
 
 const compact = (n: number) => (n >= 1000 ? `₱${(n / 1000).toFixed(n % 1000 ? 1 : 0)}k` : `₱${n}`);
 
@@ -205,33 +222,29 @@ function MonthView() {
                   <span className={cn("self-center text-[13px] font-semibold tabular-nums leading-none lg:text-sm", date === today && "grid size-6 place-items-center rounded-full bg-destructive text-[12px] text-destructive-foreground")}>
                     {Number(date.slice(8))}
                   </span>
-                  {halves.map(({ h, b }) => (
-                    <span
-                      key={h}
-                      className={cn(
-                        "flex min-h-0 flex-1 items-center justify-center gap-1 truncate rounded-md px-1 text-[10px] font-medium lg:text-[11px]",
-                        !b
-                          ? "text-muted-foreground"
-                          : b.status === "blocked"
-                            ? "bg-muted text-muted-foreground line-through"
-                            : b.status === "pending"
-                              ? "bg-warning/25 text-foreground"
-                              : b.status === "checked_in" && !b.checked_out_at
-                                ? "bg-success/20 text-foreground"
-                                : "bg-foreground text-background",
-                      )}
-                    >
-                      {b ? (
-                        b.status === "blocked" ? (
+                  {tileBlocks(halves).map(({ key, b, half }) => {
+                    // A 22-hour stay from the day before still holds this morning.
+                    const carried = !!b && half === "day" && Date.parse(b.starts_at) < halfRange(settings, date, "day")[0];
+                    const note = carried ? ` · till ${niceTime(b.ends_at)}` : !half && b ? ` · ${b.slot === "h22" ? "22 hrs" : "day + night"}` : "";
+                    return (
+                      <span
+                        key={key}
+                        className={cn(
+                          "flex min-h-0 flex-1 items-center justify-center gap-1 truncate rounded-md px-1 text-[10px] font-medium lg:text-[11px]",
+                          b ? tone(b) : "text-muted-foreground",
+                          carried && "opacity-60",
+                        )}
+                      >
+                        {!b ? (
+                          <><span className="opacity-60">{half === "day" ? "Day" : "Night"}</span><span className="hidden tabular-nums lg:inline">{compact(rate(date, half ?? "day"))}</span></>
+                        ) : b.status === "blocked" ? (
                           <><Ban className="hidden size-3 shrink-0 lg:block" /><span className="truncate">{b.block_reason}</span></>
                         ) : (
-                          <><span className="hidden opacity-70 lg:inline">{h === "day" ? "D" : "N"}</span><span className="truncate">{b.guests?.name.split(" ")[0] ?? "Guest"}</span></>
-                        )
-                      ) : (
-                        <><span className="opacity-60">{h === "day" ? "D" : "N"}</span><span className="hidden tabular-nums lg:inline">{compact(rate(date, h))}</span></>
-                      )}
-                    </span>
-                  ))}
+                          <span className="truncate">{b.guests?.name.split(" ")[0] ?? "Guest"}<span className="hidden opacity-70 lg:inline">{note}</span></span>
+                        )}
+                      </span>
+                    );
+                  })}
                 </button>
               );
             })}
@@ -243,6 +256,9 @@ function MonthView() {
             <span className="rounded-full bg-muted px-2.5 py-0.5 font-medium text-muted-foreground line-through">Blocked</span>
             <span className="rounded-full border border-border/70 px-2.5 py-0.5 font-medium text-muted-foreground">Free · rate</span>
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Each date has a Day half ({settings.day_start.slice(0, 5)}–{settings.day_end.slice(0, 5)}) and a Night half ({settings.night_start.slice(0, 5)}–{settings.night_end.slice(0, 5)}). A 22-hour stay ({settings.h22_start.slice(0, 5)} to {settings.h22_end.slice(0, 5)} next day) fills both, then shows faded with “till” on the next morning.
+          </p>
         </CardContent>
       </Card>
 

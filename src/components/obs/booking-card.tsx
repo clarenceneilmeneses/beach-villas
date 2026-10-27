@@ -15,7 +15,7 @@ export function BookingCard({ b }: { b: BookingRow }) {
               <p className="truncate font-display text-base">{b.guests?.name ?? "—"}</p>
               <p className="truncate text-xs text-muted-foreground">{b.code} · {b.cottages?.name}</p>
             </div>
-            <StatusPill status={b.status} checkedOut={!!b.checked_out_at} />
+            <StatusPill status={b.status} checkedOut={!!b.checked_out_at} verifying={b.payments?.some((p) => p.status === "submitted")} />
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>{niceDate(b.stay_date)}</span>

@@ -218,7 +218,7 @@ export function BookingDialog() {
                   <Label>Paid by</Label>
                   <Select value={dpMethod} onValueChange={setDpMethod}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="cash">Cash</SelectItem><SelectItem value="gcash">GCash</SelectItem><SelectItem value="bank">Bank</SelectItem></SelectContent>
+                    <SelectContent><SelectItem value="cash">Cash</SelectItem><SelectItem value="qrph">QR Ph</SelectItem><SelectItem value="gcash">GCash</SelectItem><SelectItem value="bank">Bank</SelectItem></SelectContent>
                   </Select>
                 </div>
               </div>

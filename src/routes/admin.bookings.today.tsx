@@ -119,7 +119,7 @@ function Today() {
                       </TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{php(b.final_amount ?? b.estimate)}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{php(collectedOf(b))}</TableCell>
-                      <TableCell><div className="flex flex-wrap gap-1"><StatusPill status={b.status} checkedOut={!!b.checked_out_at} /><SourcePill source={b.source} /></div></TableCell>
+                      <TableCell><div className="flex flex-wrap gap-1"><StatusPill status={b.status} checkedOut={!!b.checked_out_at} verifying={b.payments?.some((p) => p.status === "submitted")} /><SourcePill source={b.source} /></div></TableCell>
                       <TableCell className="text-right">{action(b)}</TableCell>
                     </TableRow>
                   ))}
@@ -137,7 +137,7 @@ function Today() {
                       <p className="truncate font-display text-base">{b.guests?.name ?? "—"}</p>
                       <p className="truncate text-xs text-muted-foreground">{b.code} · {b.cottages?.name} · {SLOT_LABEL[b.slot]} · {pax(b)} pax</p>
                     </Link>
-                    <StatusPill status={b.status} checkedOut={!!b.checked_out_at} />
+                    <StatusPill status={b.status} checkedOut={!!b.checked_out_at} verifying={b.payments?.some((p) => p.status === "submitted")} />
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm text-muted-foreground">{php(collectedOf(b))} of {php(b.final_amount ?? b.estimate)}</p>

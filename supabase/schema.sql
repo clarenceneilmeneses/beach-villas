@@ -797,3 +797,8 @@ language sql stable security definer set search_path = public as $$
   cross join (values ('day'), ('night'), ('h22')) s(slot)
   order by 1, 2
 $$;
+
+-- ─── 12. QR Ph as a payment method (also migrations/004_qrph_method.sql) ─
+alter table public.payments drop constraint if exists payments_method_check;
+alter table public.payments add constraint payments_method_check
+  check (method in ('cash', 'gcash', 'bank', 'qrph'));

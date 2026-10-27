@@ -17,8 +17,14 @@ const STATUS_TONE: Record<string, string> = {
 
 const PILL = "rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide whitespace-nowrap";
 
-/** A booking's state, with "To settle" for a guest who left without settling. */
-export function StatusPill({ status, checkedOut, className }: { status: string; checkedOut?: boolean | null; className?: string }) {
+/**
+ * A booking's state, with "To settle" for a guest who left without settling,
+ * and `verifying` for a pending booking whose receipt is in but not yet
+ * checked: it is never "Confirmed" until staff verify the payment.
+ */
+export function StatusPill({ status, checkedOut, verifying, className }: { status: string; checkedOut?: boolean | null; verifying?: boolean; className?: string }) {
+  if (verifying && status === "pending")
+    return <Badge variant="outline" className={cn(PILL, "border-warning/30 bg-warning/12 text-warning", className)}>Verifying receipt</Badge>;
   const key = checkedOut && status !== "settled" && status !== "cancelled" ? "to_settle" : status;
   return (
     <Badge variant="outline" className={cn(PILL, STATUS_TONE[key] ?? "bg-secondary text-foreground/70 border-border", className)}>

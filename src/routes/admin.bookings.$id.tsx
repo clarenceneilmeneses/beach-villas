@@ -94,7 +94,7 @@ function Detail() {
             </a>
           )}
         </div>
-        <StatusPill status={b.status} checkedOut={!!b.checked_out_at} className="text-xs" />
+        <StatusPill status={b.status} checkedOut={!!b.checked_out_at} verifying={b.payments?.some((p: { status: string }) => p.status === "submitted")} className="text-xs" />
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -274,7 +274,7 @@ function Shell({ title, description, onClose, children, footer }: { title: strin
 const MethodSelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
   <Select value={value} onValueChange={onChange}>
     <SelectTrigger><SelectValue /></SelectTrigger>
-    <SelectContent><SelectItem value="cash">Cash</SelectItem><SelectItem value="gcash">GCash</SelectItem><SelectItem value="bank">Bank</SelectItem></SelectContent>
+    <SelectContent><SelectItem value="cash">Cash</SelectItem><SelectItem value="qrph">QR Ph</SelectItem><SelectItem value="gcash">GCash</SelectItem><SelectItem value="bank">Bank</SelectItem></SelectContent>
   </Select>
 );
 
@@ -381,7 +381,7 @@ function MoveDialog({ b, onClose, act }: { b: any; onClose: () => void; act: Act
           </SelectContent>
         </Select>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label htmlFor="mv-d">Date</Label><Input id="mv-d" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
         <div className="space-y-1.5">
           <Label>Slot</Label>

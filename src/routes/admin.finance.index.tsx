@@ -38,8 +38,8 @@ function Collections() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KpiCard label="Collected" value={php(total)} sub={`${rows.length} verified payments`} />
         <KpiCard label="Cash" value={php(by("cash"))} sub="Counted at Daily close" to="/admin/finance/close" />
-        <KpiCard label="GCash + bank" value={php(by("gcash") + by("bank"))} sub={`GCash ${php(by("gcash"))} · bank ${php(by("bank"))}`} />
-        <KpiCard label="Downpayments" value={php(dp)} sub={`Final payments ${php(total - dp)}`} />
+        <KpiCard label="QR Ph" value={php(by("qrph"))} sub="Scanned at checkout" />
+        <KpiCard label="GCash + bank" value={php(by("gcash") + by("bank"))} sub={`Downpayments ${php(dp)} · finals ${php(total - dp)}`} />
       </div>
 
       {q.isLoading ? <LoadingState /> : rows.length === 0 ? <EmptyState title="No payments in this period" /> : (

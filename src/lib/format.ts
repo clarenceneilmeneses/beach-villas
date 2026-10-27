@@ -29,7 +29,7 @@ export const STATUS_LABEL: Record<string, string> = {
   blocked: "Blocked",
 };
 
-export const METHOD_LABEL: Record<string, string> = { cash: "Cash", gcash: "GCash", bank: "Bank" };
+export const METHOD_LABEL: Record<string, string> = { cash: "Cash", qrph: "QR Ph", gcash: "GCash", bank: "Bank" };
 
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 });
 export const money = (n: number | string | null | undefined) => peso.format(Number(n ?? 0));
