@@ -37,6 +37,7 @@ import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { BookingDialog, useBookingDialog } from "./booking-dialog";
 import { ClearFilters, DatePicker, FilterSheet, ScopePicker } from "./scope-bar";
+import { MasterCalendarButton } from "./week-grid";
 import { LoadingState } from "./states";
 
 /**
@@ -429,6 +430,9 @@ function ShellInner({ children }: { children: ReactNode }) {
                     <DatePicker />
                     <ClearFilters />
                   </div>
+                  <div className={cn(TOP_PILL, "p-0.5")}>
+                    <MasterCalendarButton />
+                  </div>
                   <div className={TOP_PILL}>
                     <Button variant="ghost" className="rounded-full" onClick={() => booking.open({ source: "walk_in" })}>
                       <Plus className="size-4" /> Walk-in
@@ -442,7 +446,7 @@ function ShellInner({ children }: { children: ReactNode }) {
                 <div className="flex w-full items-center justify-between gap-3 lg:hidden">
                   <AccountMenu align="start" />
                   <div className={cn(TOP_PILL, "p-1")}>
-                    <Link to="/admin/calendar" className="grid size-9 place-items-center rounded-full text-foreground/75 hover:bg-secondary" aria-label="Calendar"><CalendarDays className="size-[18px]" /></Link>
+                    <MasterCalendarButton />
                     <FilterSheet />
                   </div>
                 </div>
