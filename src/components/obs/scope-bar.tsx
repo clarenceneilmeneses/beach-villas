@@ -48,7 +48,7 @@ export function DatePicker({ className }: { className?: string }) {
           {filters.preset !== "custom" && <span className="hidden whitespace-nowrap text-muted-foreground xl:inline">· {range.span}</span>}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 rounded-2xl p-2">
+      <PopoverContent align="end" collisionPadding={12} className="w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl p-2">
         {PRESETS.filter((p) => p.value !== "custom").map((p) => (
           <button
             key={p.value}
@@ -61,12 +61,15 @@ export function DatePicker({ className }: { className?: string }) {
         ))}
         <div className="mt-2 space-y-2 border-t border-border/60 px-1 pt-3">
           <p className="malaya-eyebrow px-2">Custom range</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1"><Label className="text-xs" htmlFor="flt-from">From</Label><Input id="flt-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-            <div className="space-y-1"><Label className="text-xs" htmlFor="flt-to">To</Label><Input id="flt-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+          <div className="grid gap-2">
+            <div className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2"><Label className="text-xs" htmlFor="flt-from">From</Label><Input id="flt-from" type="date" className="min-w-0 px-3" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+            <div className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2"><Label className="text-xs" htmlFor="flt-to">To</Label><Input id="flt-to" type="date" className="min-w-0 px-3" value={to} onChange={(e) => setTo(e.target.value)} /></div>
           </div>
           <Button size="sm" className="w-full" disabled={!from || !to} onClick={() => setFilters({ preset: "custom", from, to })}>Apply range</Button>
         </div>
+        <button type="button" onClick={clearFilters} className="mt-2 w-full rounded-xl px-3 py-2 text-left text-sm text-muted-foreground hover:bg-secondary/60 hover:text-foreground">
+          Clear filters · all cottages, this month
+        </button>
       </PopoverContent>
     </Popover>
   );
@@ -74,10 +77,10 @@ export function DatePicker({ className }: { className?: string }) {
 
 export function ClearFilters({ full = false }: { full?: boolean }) {
   const { active } = useFilters();
+  // The sheet always offers it; the top pill shows the × only when something is set.
+  if (full) return <Button variant="outline" className="w-full" disabled={!active} onClick={clearFilters}>Clear filters</Button>;
   if (!active) return null;
-  return full ? (
-    <Button variant="outline" className="w-full" onClick={clearFilters}>Clear filters</Button>
-  ) : (
+  return (
     <button type="button" onClick={clearFilters} className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Clear filters">
       <X className="size-4" />
     </button>

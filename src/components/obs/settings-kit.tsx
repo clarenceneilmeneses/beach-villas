@@ -38,7 +38,9 @@ export function useSettingsForm(s: Settings | null | undefined) {
   const qc = useQueryClient();
   const [f, setF] = useState<Settings | null>(s ?? null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => setF(s ?? null), [s]);
+  useEffect(() => {
+    setF(s ?? null);
+  }, [s]);
   const bind = (k: keyof Settings) => ({
     value: f ? String(f[k] ?? "") : "",
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => f && setF({ ...f, [k]: e.target.value }),

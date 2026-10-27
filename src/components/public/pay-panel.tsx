@@ -101,7 +101,10 @@ export function PayDetails({ method, amount }: { method: Method; amount: number 
 export function ReceiptPicker({ file, onChange }: { file: File | null; onChange: (f: File | null) => void }) {
   const [preview, setPreview] = useState<string | null>(null);
   useEffect(() => {
-    if (!file) return setPreview(null);
+    if (!file) {
+      setPreview(null);
+      return;
+    }
     const url = URL.createObjectURL(file);
     setPreview(url);
     return () => URL.revokeObjectURL(url);

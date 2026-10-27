@@ -56,7 +56,9 @@ function Messages() {
     };
   }, [session, qc]);
 
-  useEffect(() => end.current?.scrollIntoView({ block: "end" }), [q.data?.length]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: "end" });
+  }, [q.data?.length]);
   useNavPillAway(!!session);
 
   async function send() {
