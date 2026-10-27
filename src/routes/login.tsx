@@ -4,7 +4,7 @@ import { PublicShell } from "@/components/public/chrome";
 import { AuthPanel } from "@/components/public/auth-panel";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { rpc } from "@/lib/supabase";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>): { next?: string } => (typeof s.next === "string" ? { next: s.next } : {}),
@@ -20,8 +20,8 @@ function Login() {
     if (!session) return;
     // Staff land on the admin; guests go back where they came from.
     void (async () => {
-      const { data } = await supabase.from("staff").select("email").ilike("email", session.user.email ?? "").maybeSingle();
-      navigate({ to: next ?? (data ? "/admin" : "/my") });
+      const staff = await rpc<boolean>("is_staff", {}).catch(() => false);
+      navigate({ to: staff ? (next?.startsWith("/admin") ? next : "/admin") : (next ?? "/my") });
     })();
   }, [session, next, navigate]);
 

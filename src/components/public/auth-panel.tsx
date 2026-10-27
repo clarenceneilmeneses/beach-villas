@@ -1,9 +1,10 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
+import { rpc, supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 export function AuthPanel({ onDone, hint }: { onDone?: () => void; hint?: string }) {
@@ -11,6 +12,7 @@ export function AuthPanel({ onDone, hint }: { onDone?: () => void; hint?: string
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,9 +21,17 @@ export function AuthPanel({ onDone, hint }: { onDone?: () => void; hint?: string
       mode === "in"
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.href } });
+    if (error) {
+      setBusy(false);
+      return void toast.error(error.message);
+    }
+    if (mode === "up" && !data.session) {
+      setBusy(false);
+      return void toast.success("Check your email to confirm your account, then sign in.");
+    }
+    // Staff use the same sign-in as guests; wherever they sign in, they land on the admin.
+    if (mode === "in" && (await rpc<boolean>("is_staff", {}).catch(() => false))) return void navigate({ to: "/admin" });
     setBusy(false);
-    if (error) return void toast.error(error.message);
-    if (mode === "up" && !data.session) return void toast.success("Check your email to confirm your account, then sign in.");
     onDone?.();
   }
 
@@ -38,7 +48,6 @@ export function AuthPanel({ onDone, hint }: { onDone?: () => void; hint?: string
       <div className="space-y-1.5"><Label htmlFor="au-e">Email</Label><Input id="au-e" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>
       <div className="space-y-1.5"><Label htmlFor="au-p">Password</Label><Input id="au-p" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "in" ? "current-password" : "new-password"} /></div>
       <Button type="submit" className="h-11 w-full rounded-full" disabled={busy}>{busy ? "…" : mode === "in" ? "Sign in" : "Create account"}</Button>
-      <p className="text-center text-xs text-muted-foreground">Preview logins: guest@ · staff@ · owner@beach.test — password beach1234</p>
     </form>
   );
 }
