@@ -176,7 +176,7 @@ function Thread({ id, onBack }: { id: string; onBack: () => void }) {
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-4">
         {th.messages.map((m: any) => (
-          <div key={m.id} className={cn("max-w-[80%] rounded-2xl px-3.5 py-2 text-sm", m.author === "staff" ? "ml-auto bg-primary text-primary-foreground" : "bg-secondary")}>
+          <div key={m.id} className={cn("w-fit max-w-[80%] rounded-2xl px-3.5 py-2 text-sm", m.author === "staff" ? "ml-auto bg-primary text-primary-foreground" : "bg-secondary")}>
             <p className="whitespace-pre-wrap">{m.body}</p>
             <p className={cn("mt-0.5 text-[10px]", m.author === "staff" ? "text-primary-foreground/60" : "text-muted-foreground")}>{niceDateTime(m.created_at)}</p>
           </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight } from "@/components/icons";
 import { byCottage, Half, Legend, useBoard, type BoardHalf } from "@/components/obs/board";
 import { useBookingDialog } from "@/components/obs/booking-dialog";
+import { ActionStrip } from "@/components/obs/action-strip";
 import { KpiCard, SectionHeading } from "@/components/obs/cards";
 import { ErrorState, LoadingState } from "@/components/obs/states";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useCottages } from "@/lib/data";
 import { scopedCottages, useFilters } from "@/lib/filters";
 import { addDays, manilaDayStart, manilaToday, METHOD_LABEL, niceDate, php } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({ component: Dashboard });
 
@@ -43,6 +45,8 @@ function Dashboard() {
 
   return (
     <div className="space-y-8">
+      <ActionStrip />
+
       <section>
         <SectionHeading
           eyebrow={date === today ? `Today · ${niceDate(date, { weekday: "long", month: "long", day: "numeric" })}` : niceDate(date, { weekday: "long", month: "long", day: "numeric" })}
@@ -63,7 +67,7 @@ function Dashboard() {
         </div>
       </section>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+      <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-6", owner && "xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]")}>
         <section>
           <SectionHeading eyebrow={`${new Set(rows.map((h) => h.cottage_id)).size} cottages · tap a free half to book`} title="Cottage board" action={<Button onClick={() => booking.open({ date, source: "walk_in" })}>Walk-in</Button>} />
           <Card className="border-border/70 bg-surface shadow-level-2">
@@ -87,63 +91,13 @@ function Dashboard() {
           </Card>
         </section>
 
-        <div className="space-y-6">
-          <NeedsAction owner={owner} />
-          {owner && <TodayMoney />}
-        </div>
+        {owner && (
+          <div className="space-y-6">
+            <TodayMoney />
+          </div>
+        )}
       </div>
     </div>
-  );
-}
-
-function NeedsAction({ owner }: { owner: boolean }) {
-  const q = useQuery({
-    queryKey: ["needs-action", owner],
-    queryFn: async () => {
-      const [receipts, unsettled, unread, edits] = await Promise.all([
-        supabase.from("payments").select("id, amount, method, booking_id, bookings(code, guests(name))").eq("status", "submitted").order("created_at"),
-        supabase.from("bookings").select("id, code, guests(name)").not("checked_out_at", "is", null).in("status", ["confirmed", "checked_in"]),
-        supabase.from("threads").select("id, channel, guests(name)").eq("unread", true),
-        owner
-          ? supabase.from("payment_edits").select("id, old_amount, new_amount, edited_by, payments(booking_id, bookings(code))").gte("edited_at", manilaDayStart(manilaToday()))
-          : Promise.resolve({ data: [] as unknown[] }),
-      ]);
-      const items: { key: string; to: string; title: string; sub: string; action: string }[] = [];
-      for (const p of (receipts.data ?? []) as any[]) items.push({ key: p.id, to: `/admin/bookings/${p.booking_id}`, title: `Verify ${php(p.amount)} ${METHOD_LABEL[p.method]}`, sub: `${p.bookings?.code} · ${p.bookings?.guests?.name ?? ""}`, action: "Verify" });
-      for (const b of (unsettled.data ?? []) as any[]) items.push({ key: b.id, to: `/admin/bookings/${b.id}`, title: "Checked out, not settled", sub: `${b.code} · ${b.guests?.name ?? ""}`, action: "Settle" });
-      for (const t of (unread.data ?? []) as any[]) items.push({ key: t.id, to: `/admin/inbox?t=${t.id}`, title: `Unread ${t.channel === "messenger" ? "Messenger" : t.channel === "whatsapp" ? "WhatsApp" : "Viber"} chat`, sub: t.guests?.name ?? "", action: "Reply" });
-      for (const e of ((edits as any).data ?? []) as any[]) items.push({ key: e.id, to: `/admin/bookings/${e.payments?.booking_id}`, title: `Payment edited ${php(e.old_amount)} → ${php(e.new_amount)}`, sub: `${e.payments?.bookings?.code} · by ${e.edited_by}`, action: "View" });
-      return items;
-    },
-  });
-  const router = useRouter();
-  return (
-    <section>
-      <SectionHeading eyebrow={q.data ? `${q.data.length} waiting` : "Checking…"} title="Needs action" />
-      <Card className="border-border/70 bg-surface shadow-level-2">
-        <CardContent className="p-2">
-          {!q.data ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
-          ) : q.data.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">All clear — nothing waiting on anyone.</p>
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {q.data.map((i) => (
-                <li key={i.key}>
-                  <button onClick={() => router.history.push(i.to)} className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-secondary/60">
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{i.title}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{i.sub}</span>
-                    </span>
-                    <span className="link-action inline-flex shrink-0 items-center gap-1 text-xs font-semibold">{i.action} <ArrowRight className="size-3.5" /></span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-    </section>
   );
 }
 

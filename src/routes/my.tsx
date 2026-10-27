@@ -48,7 +48,6 @@ function MyBookings() {
             <h1 className="site-display text-3xl sm:text-4xl">My bookings</h1>
             {session && <p className="text-sm text-muted-foreground">{session.user.email}</p>}
           </div>
-          {session && <Button variant="outline" className="rounded-full" onClick={() => supabase.auth.signOut()}>Sign out</Button>}
         </div>
 
         <div className="mt-6">

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
+import { GuestBell } from "@/components/notification-bell";
 import { useSettings } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -97,7 +98,10 @@ function DesktopHeader() {
         </nav>
         <div className="flex items-center gap-3">
           {session ? (
-            <AccountMenu />
+            <>
+              <div className={cn(TOP_PILL, "p-0.5")}><GuestBell /></div>
+              <AccountMenu />
+            </>
           ) : (
             <Link to="/login" search={{ next: path }} className="site-display text-[15px] font-medium text-foreground/80 hover:text-foreground">Sign in</Link>
           )}
@@ -118,7 +122,7 @@ function PhoneTop() {
       <Wordmark />
       {session ? (
         <div className={cn(TOP_PILL, "p-1")}>
-          <Link to="/messages" className="grid size-9 place-items-center rounded-full text-foreground/75 hover:bg-secondary" aria-label="Messages"><MessageCircle className="size-[18px]" /></Link>
+          <GuestBell />
           <Link to="/my" className="grid size-9 place-items-center rounded-full text-foreground/75 hover:bg-secondary" aria-label="My bookings"><User className="size-[18px]" /></Link>
         </div>
       ) : (

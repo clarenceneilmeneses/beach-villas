@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { BookingDialog, useBookingDialog } from "./booking-dialog";
 import { ClearFilters, DatePicker, FilterSheet, ScopePicker } from "./scope-bar";
 import { MasterCalendarButton } from "./week-grid";
+import { AdminBell } from "@/components/notification-bell";
 import { LoadingState } from "./states";
 
 /**
@@ -432,6 +433,7 @@ function ShellInner({ children }: { children: ReactNode }) {
                   </div>
                   <div className={cn(TOP_PILL, "p-0.5")}>
                     <MasterCalendarButton />
+                    <AdminBell />
                   </div>
                   <div className={TOP_PILL}>
                     <Button variant="ghost" className="rounded-full" onClick={() => booking.open({ source: "walk_in" })}>
@@ -447,6 +449,7 @@ function ShellInner({ children }: { children: ReactNode }) {
                   <AccountMenu align="start" />
                   <div className={cn(TOP_PILL, "p-1")}>
                     <MasterCalendarButton />
+                    <AdminBell />
                     <FilterSheet />
                   </div>
                 </div>

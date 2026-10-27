@@ -92,7 +92,7 @@ function Messages() {
                 <p className="py-16 text-center text-sm text-muted-foreground">No messages yet. Say hi — the front desk will answer here.</p>
               )}
               {q.data?.map((m) => (
-                <div key={m.id} className={cn("max-w-[80%] rounded-2xl px-3.5 py-2 text-sm", m.author === "guest" ? "ml-auto bg-primary text-primary-foreground" : "bg-secondary")}>
+                <div key={m.id} className={cn("w-fit max-w-[80%] rounded-2xl px-3.5 py-2 text-sm", m.author === "guest" ? "ml-auto bg-primary text-primary-foreground" : "bg-secondary")}>
                   {m.author === "staff" && <p className="mb-0.5 text-[11px] font-semibold">{settings?.resort_name}</p>}
                   <p className="whitespace-pre-wrap">{m.body}</p>
                   <p className={cn("mt-0.5 text-[10px]", m.author === "guest" ? "text-primary-foreground/60" : "text-muted-foreground")}>{niceDateTime(m.created_at)}</p>
