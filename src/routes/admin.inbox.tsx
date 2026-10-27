@@ -22,8 +22,9 @@ export const Route = createFileRoute("/admin/inbox")({
   component: Inbox,
 });
 
-const CHANNEL: Record<string, string> = { messenger: "Messenger", whatsapp: "WhatsApp", viber: "Viber", phone: "Phone" };
+const CHANNEL: Record<string, string> = { website: "Website chat", messenger: "Messenger", whatsapp: "WhatsApp", viber: "Viber", phone: "Phone" };
 const CHANNEL_TONE: Record<string, string> = {
+  website: "bg-primary text-primary-foreground border-primary",
   messenger: "bg-primary/10 text-primary border-primary/25",
   whatsapp: "bg-success/12 text-success border-success/30",
   viber: "bg-secondary text-foreground/75 border-border",
@@ -92,9 +93,6 @@ function Inbox() {
 
   return (
     <div className="flex flex-col gap-3 lg:h-full">
-      <div className="rounded-2xl border border-border/70 bg-card px-4 py-2.5 text-sm text-muted-foreground shadow-level-1">
-        Messenger connects here once Meta approves the app; until then these are sample chats. WhatsApp and Viber stay in their own apps — use Copy on a quick reply.
-      </div>
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[360px_minmax(0,1fr)]">
         {list}
         {t ? <Thread id={t} onBack={() => navigate({ to: "/admin/inbox", search: {} })} /> : (
@@ -136,7 +134,8 @@ function Thread({ id, onBack }: { id: string; onBack: () => void }) {
 
   if (!q.data) return <Card className="border-border/70 bg-surface p-6 text-sm text-muted-foreground shadow-level-2">Loading…</Card>;
   const th = q.data;
-  const live = th.channel === "messenger";
+  // Website chat and Messenger replies reach the guest; WhatsApp and Viber are a log.
+  const live = th.channel === "website" || th.channel === "messenger";
 
   async function send() {
     if (!text.trim()) return;
@@ -160,7 +159,7 @@ function Thread({ id, onBack }: { id: string; onBack: () => void }) {
             {th.guests?.mobile && <a href={`tel:${th.guests.mobile}`} className="inline-flex items-center gap-1 hover:text-foreground"><Phone className="size-3.5" /> {th.guests.mobile}</a>}
           </p>
         </div>
-        <Button size="sm" onClick={() => booking.open({ source: th.channel === "phone" ? "phone" : th.channel, name: th.guests?.name, mobile: th.guests?.mobile })}>Create booking</Button>
+        <Button size="sm" onClick={() => booking.open({ source: th.channel, name: th.guests?.name, mobile: th.guests?.mobile })}>Create booking</Button>
       </div>
 
       {th.guests?.bookings?.length > 0 && (
@@ -189,14 +188,14 @@ function Thread({ id, onBack }: { id: string; onBack: () => void }) {
           {replies.data?.map((r: any) => (
             <span key={r.id} className="inline-flex shrink-0 items-center overflow-hidden rounded-full border border-border/70 bg-card text-xs shadow-level-1">
               <button onClick={() => setText(r.body)} className="px-3 py-1.5 hover:bg-secondary">{r.title}</button>
-              <button onClick={() => { void navigator.clipboard.writeText(r.body); toast.success(`Copied — paste it in ${CHANNEL[th.channel]}`); }} className="border-l border-border/70 px-2 py-1.5 hover:bg-secondary" aria-label={`Copy ${r.title}`}>
+              <button onClick={() => { void navigator.clipboard.writeText(r.body); toast.success(live ? "Copied" : `Copied — paste it in ${CHANNEL[th.channel]}`); }} className="border-l border-border/70 px-2 py-1.5 hover:bg-secondary" aria-label={`Copy ${r.title}`}>
                 <Copy className="size-3.5" />
               </button>
             </span>
           ))}
         </div>
         <div className="flex items-end gap-2">
-          <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={2} placeholder={live ? "Reply on Messenger…" : `Log what you sent on ${CHANNEL[th.channel]}…`} className="min-h-[44px] resize-none" />
+          <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={2} placeholder={live ? (th.channel === "website" ? "Reply to the guest…" : "Reply on Messenger…") : `Log what you sent on ${CHANNEL[th.channel]}…`} className="min-h-[44px] resize-none" />
           <Button onClick={send} size="icon" className="size-11 shrink-0 rounded-full" aria-label="Send"><Send className="size-4" /></Button>
         </div>
         {!live && <p className="text-[11px] text-muted-foreground">{CHANNEL[th.channel]} replies go out from the {CHANNEL[th.channel]} app; this keeps a copy on the guest.</p>}

@@ -37,7 +37,7 @@ export function useBookingDialog() {
   return { open: (preset: BookingPreset = {}) => set({ open: true, preset }) };
 }
 
-const SOURCES = ["walk_in", "messenger", "whatsapp", "viber", "phone", "facebook"] as const;
+const SOURCES = ["walk_in", "website", "messenger", "whatsapp", "viber", "phone", "facebook"] as const;
 
 /** Malaya's segmented chip row, for the three slots. */
 export function SlotChips({ value, onChange, slots = ["day", "night", "h22"] }: { value: Slot; onChange: (s: Slot) => void; slots?: Slot[] }) {

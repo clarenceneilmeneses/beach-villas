@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MyRouteImport } from './routes/my'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCalendarRouteImport } from './routes/admin.calendar'
@@ -57,6 +58,11 @@ const BookRoute = BookRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyRoute = MyRouteImport.update({
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/book': typeof BookRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/my': typeof MyRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/inbox': typeof AdminInboxRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/book': typeof BookRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/my': typeof MyRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/inbox': typeof AdminInboxRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/book': typeof BookRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/my': typeof MyRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/inbox': typeof AdminInboxRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/book'
     | '/login'
+    | '/messages'
     | '/my'
     | '/admin/calendar'
     | '/admin/inbox'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/book'
     | '/login'
+    | '/messages'
     | '/my'
     | '/admin/calendar'
     | '/admin/inbox'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/book'
     | '/login'
+    | '/messages'
     | '/my'
     | '/admin/calendar'
     | '/admin/inbox'
@@ -320,6 +332,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   BookRoute: typeof BookRoute
   LoginRoute: typeof LoginRoute
+  MessagesRoute: typeof MessagesRoute
   MyRoute: typeof MyRoute
   CottagesTypeIdRoute: typeof CottagesTypeIdRoute
 }
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my': {
@@ -545,6 +565,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   BookRoute: BookRoute,
   LoginRoute: LoginRoute,
+  MessagesRoute: MessagesRoute,
   MyRoute: MyRoute,
   CottagesTypeIdRoute: CottagesTypeIdRoute,
 }

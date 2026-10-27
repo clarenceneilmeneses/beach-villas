@@ -8,9 +8,7 @@ import { PhotoTile, PublicShell } from "@/components/public/chrome";
 import { AuthPanel } from "@/components/public/auth-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MethodPicker, PayDetails, ReceiptPicker, type Method } from "@/components/public/pay-panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 import { slotTimes, useSettings, type Booking, type Payment } from "@/lib/data";
@@ -95,13 +93,9 @@ function TripCard({ b, highlight }: { b: Row; highlight: boolean }) {
         </div>
         {dp?.status === "submitted" && <p className="rounded-2xl bg-secondary/70 p-3 text-sm">We got your receipt. Staff will confirm it shortly.</p>}
         {needsReceipt && (
-          <div className="space-y-3 rounded-2xl border border-warning/30 bg-warning/8 p-4 text-sm">
+          <div className="space-y-3 rounded-2xl border border-warning/30 bg-warning/[0.06] p-4 text-sm">
             <p className="font-medium">Send {php(b.cottages.cottage_types.downpayment)} to keep this booking{b.hold_until ? ` — held until ${niceTime(b.hold_until)}` : ""}.</p>
             {rejected && <p className="text-destructive">Your last receipt couldn't be verified. Please send it again or message us.</p>}
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="rounded-xl bg-card p-3"><p className="malaya-eyebrow">GCash</p><p className="font-medium">{settings?.gcash_number}</p><p className="text-xs text-muted-foreground">{settings?.gcash_name}</p></div>
-              <div className="rounded-xl bg-card p-3"><p className="malaya-eyebrow">{settings?.bank_name || "Bank"}</p><p className="font-medium">{settings?.bank_account_number}</p><p className="text-xs text-muted-foreground">{settings?.bank_account_name}</p></div>
-            </div>
             <ReceiptForm booking={b} />
           </div>
         )}
@@ -113,16 +107,16 @@ function TripCard({ b, highlight }: { b: Row; highlight: boolean }) {
 function ReceiptForm({ booking }: { booking: Row }) {
   const { session } = useAuth();
   const qc = useQueryClient();
-  const [method, setMethod] = useState("gcash");
-  const [ref, setRef] = useState("");
+  const [method, setMethod] = useState<Method>("gcash");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const amount = Number(booking.cottages.cottage_types.downpayment);
   async function send() {
     if (!file) return void toast.error("Attach the receipt screenshot");
     setBusy(true);
     try {
       const path = await uploadReceipt(session!.user.id, file);
-      await rpc("submit_receipt", { p_booking: booking.id, p_path: path, p_method: method, p_amount: booking.cottages.cottage_types.downpayment, p_reference: ref });
+      await rpc("submit_receipt", { p_booking: booking.id, p_path: path, p_method: method, p_amount: amount, p_reference: "" });
       toast.success("Receipt sent");
       qc.invalidateQueries({ queryKey: ["my-bookings"] });
     } catch (e) {
@@ -132,17 +126,11 @@ function ReceiptForm({ booking }: { booking: Row }) {
     }
   }
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5">
-        <Label>Paid by</Label>
-        <Select value={method} onValueChange={setMethod}>
-          <SelectTrigger className="bg-card"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="gcash">GCash</SelectItem><SelectItem value="bank">Bank transfer</SelectItem></SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1.5"><Label htmlFor={`rf-${booking.id}`}>Reference no.</Label><Input id={`rf-${booking.id}`} className="bg-card" value={ref} onChange={(e) => setRef(e.target.value)} /></div>
-      <Input type="file" accept="image/*" className="bg-card sm:col-span-2" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-      <Button className="rounded-full sm:col-span-2" disabled={busy} onClick={send}><Upload className="size-4" /> {busy ? "Sending…" : "Send receipt"}</Button>
+    <div className="space-y-4">
+      <MethodPicker value={method} onChange={setMethod} />
+      <PayDetails method={method} amount={amount} />
+      <ReceiptPicker file={file} onChange={setFile} />
+      <Button className="w-full rounded-full" disabled={busy || !file} onClick={send}><Upload className="size-4" /> {busy ? "Sending…" : "Send receipt"}</Button>
     </div>
   );
 }

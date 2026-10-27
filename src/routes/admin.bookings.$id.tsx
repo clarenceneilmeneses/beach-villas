@@ -63,6 +63,22 @@ function Detail() {
   const balance = Math.max(0, Number(b.estimate) - paid);
   const live = ["confirmed", "checked_in"].includes(b.status);
   const blocked = b.status === "blocked";
+  const payActions = (p: PaymentRow) => (
+    <>
+      {p.receipt_path && (
+        <Button size="sm" variant="ghost" onClick={async () => { const u = await signedUrl(p.receipt_path); if (u) window.open(u, "_blank"); }}>
+          <Camera className="size-4" />
+        </Button>
+      )}
+      {p.status === "submitted" && (
+        <>
+          <Button size="sm" variant="destructive-outline" onClick={() => act("verify_payment", { p_payment: p.id, p_ok: false }, "Rejected")}>Reject</Button>
+          <Button size="sm" variant="success" onClick={() => act("verify_payment", { p_payment: p.id, p_ok: true }, "Verified — booking confirmed")}>Verify</Button>
+        </>
+      )}
+      {p.status === "verified" && <Button size="sm" variant="outline" onClick={() => setDialog({ pay: p })}>Edit</Button>}
+    </>
+  );
   const status = (action: string, ok: string, reason = "") => act("set_booking_status", { p_booking: id, p_action: action, p_reason: reason }, ok);
 
   return (
@@ -84,7 +100,7 @@ function Detail() {
         <StatusPill status={b.status} checkedOut={!!b.checked_out_at} className="text-xs" />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           <Card className="border-border/70 bg-surface shadow-level-2">
             <CardContent className="grid gap-4 p-5 sm:grid-cols-2">
@@ -104,6 +120,23 @@ function Detail() {
                   {payments.length === 0 ? (
                     <p className="p-5 text-sm text-muted-foreground">No payments yet.</p>
                   ) : (
+                    <>
+                    <ul className="divide-y divide-border/60 sm:hidden">
+                      {payments.map((p) => (
+                        <li key={p.id} className="space-y-2 px-4 py-3.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-display text-lg tabular-nums">{php(p.amount)}</p>
+                              <p className="text-xs text-muted-foreground">{p.kind === "final" ? "Final" : p.kind === "refund" ? "Refund" : "Downpayment"} · {niceDateTime(p.created_at)}</p>
+                            </div>
+                            <div className="flex flex-wrap justify-end gap-1"><MethodPill method={p.method} /><PaymentPill status={p.status} /></div>
+                          </div>
+                          {p.payment_edits?.map((e) => <p key={e.id} className="text-[11px] text-muted-foreground">was {php(e.old_amount)} · {e.edited_by?.split("@")[0]}{e.reason ? ` · ${e.reason}` : ""}</p>)}
+                          <div className="flex flex-wrap gap-1.5">{payActions(p)}</div>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="hidden sm:block">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -136,23 +169,14 @@ function Detail() {
                               {p.edited && <Badge variant="outline" className="ml-1 rounded-full border-warning/30 bg-warning/12 text-[11px] text-warning">Edited</Badge>}
                             </TableCell>
                             <TableCell className="space-x-1 whitespace-nowrap text-right">
-                              {p.receipt_path && (
-                                <Button size="sm" variant="ghost" onClick={async () => { const u = await signedUrl(p.receipt_path); if (u) window.open(u, "_blank"); }}>
-                                  <Camera className="size-4" />
-                                </Button>
-                              )}
-                              {p.status === "submitted" && (
-                                <>
-                                  <Button size="sm" variant="destructive-outline" onClick={() => act("verify_payment", { p_payment: p.id, p_ok: false }, "Rejected")}>Reject</Button>
-                                  <Button size="sm" variant="success" onClick={() => act("verify_payment", { p_payment: p.id, p_ok: true }, "Verified — booking confirmed")}>Verify</Button>
-                                </>
-                              )}
-                              {p.status === "verified" && <Button size="sm" variant="outline" onClick={() => setDialog({ pay: p })}>Edit</Button>}
+                              {payActions(p)}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
+                    </div>
+                    </>
                   )}
                 </CardContent>
               </Card>
@@ -179,7 +203,7 @@ function Detail() {
           </section>
         </div>
 
-        <aside className="space-y-4">
+        <aside className="order-first space-y-4 xl:order-none">
           {!blocked && (
             <Card className="border-border/70 bg-surface shadow-level-2">
               <CardContent className="space-y-3 p-5">

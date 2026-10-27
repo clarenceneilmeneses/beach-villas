@@ -23,7 +23,9 @@ await db.exec(`
     $$ select string_to_array(name, '/') $$;
 `);
 
-await db.exec(readFileSync(new URL("../supabase/schema.sql", import.meta.url), "utf8"));
+const schemaFile = process.env.SCHEMA ?? "../supabase/schema.sql";
+await db.exec(readFileSync(new URL(schemaFile, import.meta.url), "utf8"));
+if (process.env.MIGRATE) await db.exec(readFileSync(new URL("../supabase/migrations/002_guest_chat_and_qr.sql", import.meta.url), "utf8"));
 
 let failures = 0;
 const as = (email, uid = "") =>
@@ -98,6 +100,12 @@ const finOk = Number(fin.rows[0].final_amount) === 1150;
 if (!finOk) failures++;
 console.log(finOk ? "  ok   " : "  FAIL ", "final amount = 500 + 650 →", fin.rows[0].final_amount);
 
+await as("newguest@beach.test", "22222222-2222-2222-2222-222222222222");
+await expectOk("guest sends a website message", "select guest_send_message('Hi, available pa po?') as id");
+await expectOk("second message goes to the same thread", "select guest_send_message('Kahit 10 pax') as id");
+const gt = await db.query("select count(*)::int as n from threads t join guests g on g.id = t.guest_id where g.user_id = '22222222-2222-2222-2222-222222222222' and t.channel = 'website' and t.unread");
+console.log(gt.rows[0].n === 1 ? "  ok   " : "  FAIL ", "one unread website thread →", gt.rows[0].n); if (gt.rows[0].n !== 1) failures++;
+await as("staff@beach.test");
 await expectOk("board for today returns 28 halves", `select count(*) as n from board(manila_today())`);
 console.log("  info  board rows:", (await db.query(`select count(*)::int as n from board(manila_today())`)).rows[0].n);
 

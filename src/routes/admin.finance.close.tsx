@@ -54,7 +54,7 @@ function DailyClose() {
         {METHODS.map((m) => <KpiCard key={m} label={METHOD_LABEL[m]!} value={php(sum(m))} sub={m === "cash" ? "Should be in the drawer" : "Check against the app"} />)}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Card className="border-border/70 bg-surface shadow-level-2">
           <CardContent className="p-0">
             <Table>

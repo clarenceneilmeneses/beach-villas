@@ -24,6 +24,8 @@ export type Settings = {
   whatsapp_number: string;
   viber_number: string;
   facebook_url: string;
+  gcash_qr_path?: string | null;
+  bank_qr_path?: string | null;
 };
 
 export type CottageType = {
@@ -117,6 +119,10 @@ export function useCottages() {
     staleTime: 60_000,
   });
 }
+
+/** Public URL of an uploaded payment QR, or null until the owner uploads one. */
+export const qrUrl = (path: string | null | undefined) =>
+  path ? supabase.storage.from("payment-qr").getPublicUrl(path).data.publicUrl : null;
 
 /** True when the schema has not been run on this Supabase project yet. */
 export const isMissingSchema = (e: unknown) =>

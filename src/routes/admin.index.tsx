@@ -58,7 +58,7 @@ function Dashboard() {
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <section>
           <SectionHeading eyebrow="14 cottages · tap a free half to book" title="Cottage board" action={<Button onClick={() => booking.open({ date, source: "walk_in" })}>Walk-in</Button>} />
           <Card className="border-border/70 bg-surface shadow-level-2">

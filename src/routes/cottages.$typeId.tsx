@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Check, Clock, Minus, Plus, Sun, Users, Waves } from "@/components/icons";
+import { useNavPillAway } from "@/components/nav-pill";
 import { PhotoTile, PublicShell } from "@/components/public/chrome";
 import { stayParams, withDefaults, type GuestSlot } from "@/components/public/search-pill";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,8 @@ function CottagePage() {
     queryKey: ["availability", date],
     queryFn: () => rpc<{ type_id: string; slot: string; free: number }[]>("type_availability", { p_date: date }),
   });
+  // The reserve bar takes the bottom edge on a phone, as on Malaya's villa page.
+  useNavPillAway(true);
   const free = avail.data?.find((a) => a.type_id === typeId && a.slot === slot)?.free;
 
   if (!t)
@@ -67,7 +70,7 @@ function CottagePage() {
           {[0, 1, 2, 3].map((i) => <PhotoTile key={i} name={t.name} className="hidden rounded-3xl md:grid" />)}
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <div className="space-y-5">
             <Card className="rounded-3xl border-border/70 shadow-level-1">
               <CardContent className="p-6 sm:p-8">
@@ -157,7 +160,7 @@ function CottagePage() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 border-t border-border bg-card px-4 py-3 shadow-level-3 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-level-3 lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="font-semibold">{php(est.data)} <span className="text-sm font-normal text-muted-foreground">· {SLOT_LABEL[slot]}</span></p>

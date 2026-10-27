@@ -1,9 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
-import { CalendarCheck, Mail, MapPin, MessageCircle, MoreHorizontal, Phone, Search, UserRound } from "@/components/icons";
+import type { ReactNode } from "react";
+import { CalendarCheck, Mail, MapPin, MessageCircle, Phone, Search, UserRound } from "@/components/icons";
 import { NAV_PILL, navPillDock, navPillTab, useNavPillIsAway, useTyping } from "@/components/nav-pill";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
 import { useSettings } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -26,6 +25,7 @@ const NAV = [
   { to: "/", label: "Cottages", exact: true },
   { to: "/about", label: "About" },
   { to: "/my", label: "My bookings" },
+  { to: "/messages", label: "Messages" },
 ];
 
 function Header() {
@@ -82,6 +82,7 @@ function Footer() {
         <div className={col}>
           <p className={head}>Support</p>
           <Link to="/my" className="flex items-center gap-2 hover:underline"><CalendarCheck className="size-4" /> My bookings</Link>
+          <Link to="/messages" className="flex items-center gap-2 hover:underline"><MessageCircle className="size-4" /> Message us</Link>
           {s?.messenger_url && <a href={s.messenger_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:underline"><MessageCircle className="size-4" /> Messenger</a>}
           {s?.whatsapp_number && <a href={`tel:${s.whatsapp_number}`} className="flex items-center gap-2 hover:underline"><Phone className="size-4" /> {s.whatsapp_number}</a>}
         </div>
@@ -97,38 +98,14 @@ function Footer() {
   );
 }
 
-export function ChatSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const s = useSettings().data;
-  const links = [
-    { label: "Messenger", href: s?.messenger_url || "https://m.me/" },
-    { label: "WhatsApp", href: `https://wa.me/${(s?.whatsapp_number ?? "").replace(/\D/g, "")}` },
-    { label: "Viber", href: `viber://chat?number=${encodeURIComponent(s?.viber_number ?? "")}` },
-    { label: "Facebook page", href: s?.facebook_url || "https://facebook.com/" },
-  ];
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="mx-auto max-w-lg rounded-t-3xl">
-        <SheetTitle className="font-display text-xl">Message us</SheetTitle>
-        <p className="mt-1 text-sm text-muted-foreground">We reply fastest on Messenger. Send your booking number if you have one.</p>
-        <div className="mt-5 grid gap-2 pb-4">
-          {links.map((l) => (
-            <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-border/70 bg-card px-4 py-3.5 font-medium shadow-level-1 hover:bg-secondary/60">
-              {l.label} <MessageCircle className="size-4 text-muted-foreground" />
-            </a>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function BottomNav({ onChat }: { onChat: () => void }) {
+function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const typing = useTyping();
   const away = useNavPillIsAway();
   const tabs = [
     { to: "/", label: "Explore", icon: Search, active: path === "/" || path.startsWith("/cottages") || path.startsWith("/book") },
     { to: "/my", label: "Bookings", icon: CalendarCheck, active: path.startsWith("/my") },
+    { to: "/messages", label: "Messages", icon: MessageCircle, active: path.startsWith("/messages") },
     { to: "/about", label: "About", icon: UserRound, active: path.startsWith("/about") },
   ];
   return (
@@ -140,32 +117,25 @@ function BottomNav({ onChat }: { onChat: () => void }) {
             <span>{t.label}</span>
           </Link>
         ))}
-        <button type="button" onClick={onChat} className={navPillTab(false)}>
-          <MoreHorizontal className="size-[22px]" strokeWidth={1.8} />
-          <span>Chat</span>
-        </button>
       </nav>
     </div>
   );
 }
 
 export function PublicShell({ children, hideFooter = false }: { children: ReactNode; hideFooter?: boolean }) {
-  const [chat, setChat] = useState(false);
   return (
     <div className="min-h-dvh bg-background pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-0">
       <Header />
       <main>{children}</main>
       {!hideFooter && <Footer />}
-      <button
-        type="button"
-        onClick={() => setChat(true)}
+      <Link
+        to="/messages"
         aria-label="Message us"
         className="fixed bottom-6 right-6 z-30 hidden size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-level-3 transition-transform hover:scale-105 md:grid"
       >
         <MessageCircle className="size-6" />
-      </button>
-      <BottomNav onChat={() => setChat(true)} />
-      <ChatSheet open={chat} onOpenChange={setChat} />
+      </Link>
+      <BottomNav />
     </div>
   );
 }
