@@ -43,7 +43,15 @@ import { cn } from "@/lib/utils";
 export function Wordmark({ className }: { className?: string }) {
   const name = shortName(useSettings().data);
   return (
-    <Link to="/" className={cn("whitespace-nowrap font-display text-[22px] uppercase leading-none tracking-[0.08em] text-foreground sm:text-[26px]", className)}>
+    <Link
+      to="/"
+      className={cn(
+        "font-display uppercase tracking-[0.08em] text-foreground",
+        // A long name wraps to two balanced lines on a phone instead of pushing the bar.
+        name.length > 18 ? "max-w-[16ch] text-balance text-[18px] leading-[1.1] sm:max-w-none sm:text-[22px] lg:whitespace-nowrap" : "whitespace-nowrap text-[22px] leading-none sm:text-[26px]",
+        className,
+      )}
+    >
       {name}
     </Link>
   );
@@ -267,8 +275,9 @@ export function PublicShell({ children, explore = false }: { children: ReactNode
 }
 
 /** A photo's place until the owner sends real ones: a soft tile with the name's initials. */
-export function PhotoTile({ name, className }: { name: string; className?: string }) {
+export function PhotoTile({ name, src, className }: { name: string; src?: string; className?: string }) {
   const initials = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  if (src) return <img src={src} alt={name} loading="lazy" decoding="async" className={cn("block bg-secondary object-cover", className)} />;
   return (
     <div className={cn("grid place-items-center overflow-hidden bg-gradient-to-br from-secondary via-muted to-accent", className)}>
       <span className="font-display text-2xl tracking-[0.3em] text-foreground/30">{initials}</span>

@@ -39,7 +39,8 @@ create table public.cottage_types (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text default '',
-  photo_url text default '',
+  photo_url text default '',      -- the cover (photos[1]); kept for older clients
+  photos text[] not null default '{}',
   pax_included int not null default 4,
   max_pax int not null default 6,
   rate_day numeric(10,2) not null,
@@ -872,3 +873,12 @@ begin
   ) into result;
   return result;
 end $$;
+
+-- ─── 14. Cottage photos: public bucket, the owner manages (also migrations/007_cottage_photos.sql) ─
+insert into storage.buckets (id, name, public) values ('cottage-photos', 'cottage-photos', true) on conflict do nothing;
+create policy "cottage-photos: owner uploads" on storage.objects for insert to authenticated
+  with check (bucket_id = 'cottage-photos' and public.is_owner());
+create policy "cottage-photos: owner replaces" on storage.objects for update to authenticated
+  using (bucket_id = 'cottage-photos' and public.is_owner());
+create policy "cottage-photos: owner removes" on storage.objects for delete to authenticated
+  using (bucket_id = 'cottage-photos' and public.is_owner());

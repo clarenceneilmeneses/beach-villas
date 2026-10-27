@@ -11,7 +11,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#ffffff" },
-      { title: "Patungan Beach · Lerma & Berto Libay Cottages" },
+      { title: "Lerma & Berto Libay Cottages · Patungan Beach" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },

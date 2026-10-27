@@ -36,6 +36,7 @@ export type CottageType = {
   name: string;
   description: string;
   photo_url: string;
+  photos?: string[] | null;
   pax_included: number;
   max_pax: number;
   rate_day: number;
@@ -46,6 +47,10 @@ export type CottageType = {
   downpayment: number;
   sort: number;
 };
+
+/** A type's photos, cover first. Falls back to the single photo_url before migration 007. */
+export const photosOf = (t: Pick<CottageType, "photo_url" | "photos"> | undefined) =>
+  t?.photos?.length ? t.photos : t?.photo_url ? [t.photo_url] : [];
 
 export type Cottage = { id: string; name: string; type_id: string; sort: number };
 

@@ -5,7 +5,7 @@ import { ErrorState } from "@/components/obs/states";
 import { PhotoTile, PublicShell } from "@/components/public/chrome";
 import { SearchPill, stayParams, withDefaults, type StaySearch } from "@/components/public/search-pill";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCottageTypes, useSettings, type CottageType } from "@/lib/data";
+import { photosOf, useCottageTypes, useSettings, type CottageType } from "@/lib/data";
 import { niceDate, php, SLOT_LABEL } from "@/lib/format";
 import { rpc } from "@/lib/supabase";
 
@@ -60,7 +60,7 @@ function CottageCard({ t, stay, free }: { t: CottageType; stay: StaySearch; free
   return (
     <Link to="/cottages/$typeId" params={{ typeId: t.id }} search={stay} className="group block">
       <div className="relative">
-        <PhotoTile name={t.name} className="aspect-square rounded-3xl transition-transform duration-300 group-hover:scale-[1.01] lg:aspect-[4/3]" />
+        <PhotoTile name={t.name} src={photosOf(t)[0]} className="aspect-square w-full rounded-3xl transition-transform duration-300 group-hover:scale-[1.01] lg:aspect-[4/3]" />
         {free !== undefined && (
           <span className="absolute left-3 top-3 rounded-full bg-card/95 px-3 py-1 text-xs font-medium shadow-level-1">
             {full ? "Full on this date" : `${free} free`}

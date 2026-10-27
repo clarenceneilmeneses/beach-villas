@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
-import { slotTimes, useCottageTypes, useSettings, type CottageType } from "@/lib/data";
+import { photosOf, slotTimes, useCottageTypes, useSettings, type CottageType } from "@/lib/data";
 import { manilaToday, niceDate, php, SLOT_LABEL } from "@/lib/format";
 import { rpc, uploadReceipt } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -195,7 +195,7 @@ function Trip({ t, q, total, settings }: { t?: CottageType; q: Q; total?: number
   return (
     <div className="space-y-4">
       <div className="flex gap-4 rounded-3xl border border-border/70 bg-card p-4 shadow-level-1">
-        <PhotoTile name={t.name} className="size-24 shrink-0 rounded-2xl" />
+        <PhotoTile name={t.name} src={photosOf(t)[0]} className="size-24 shrink-0 rounded-2xl" />
         <div>
           <p className="site-display text-lg">{t.name}</p>
           <p className="text-sm text-muted-foreground">{niceDate(q.date, { weekday: "long", month: "long", day: "numeric" })}</p>
@@ -286,7 +286,7 @@ function Summary({ t, q, total, settings, children }: { t?: CottageType; q: Q; t
         {!t ? <Skeleton className="h-40 rounded-2xl" /> : (
           <>
             <div className="flex gap-4">
-              <PhotoTile name={t.name} className="size-20 shrink-0 rounded-2xl" />
+              <PhotoTile name={t.name} src={photosOf(t)[0]} className="size-20 shrink-0 rounded-2xl" />
               <div>
                 <p className="site-display text-lg">{t.name}</p>
                 <p className="text-sm text-muted-foreground">{SLOT_LABEL[q.slot]} · {niceDate(q.date)}</p>

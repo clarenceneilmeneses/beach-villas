@@ -4,12 +4,13 @@ import { useState } from "react";
 import { ArrowLeft, Check, Clock, Minus, Plus, Sun, Users, Waves } from "@/components/icons";
 import { useNavPillAway } from "@/components/nav-pill";
 import { AvailabilityCalendar } from "@/components/public/availability-calendar";
-import { PhotoTile, PublicShell } from "@/components/public/chrome";
+import { PublicShell } from "@/components/public/chrome";
+import { Gallery } from "@/components/public/gallery";
 import { stayParams, withDefaults, type GuestSlot } from "@/components/public/search-pill";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { slotTimes, useCottageTypes, useSettings } from "@/lib/data";
+import { photosOf, slotTimes, useCottageTypes, useSettings } from "@/lib/data";
 import { manilaToday, php, SLOT_LABEL } from "@/lib/format";
 import { rpc } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -66,10 +67,7 @@ function CottagePage() {
           </div>
         </div>
 
-        <div className="grid gap-2.5 md:h-[300px] md:grid-cols-4 md:grid-rows-2">
-          <PhotoTile name={t.name} className="aspect-[4/3] rounded-3xl md:col-span-2 md:row-span-2 md:aspect-auto" />
-          {[0, 1, 2, 3].map((i) => <PhotoTile key={i} name={t.name} className="hidden rounded-3xl md:grid" />)}
-        </div>
+        <Gallery name={t.name} photos={photosOf(t)} />
 
         <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <div className="space-y-5">
