@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { Download, Plus } from "@/components/icons";
 import { OwnerOnly } from "@/components/obs/app-shell";
 import { KpiCard, SectionHeading } from "@/components/obs/cards";
-import { PeriodChips } from "@/components/obs/period-chips";
 import { EmptyState, ErrorState, LoadingState } from "@/components/obs/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCottages } from "@/lib/data";
-import { downloadCsv, range, type Period } from "@/lib/finance";
+import { downloadCsv } from "@/lib/finance";
+import { scopedCottages, useFilters } from "@/lib/filters";
 import { manilaToday, niceDate, php } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
@@ -24,9 +24,10 @@ export const Route = createFileRoute("/admin/finance/expenses")({ component: () 
 const CATEGORIES = ["Utilities", "Staff", "Supplies", "Repairs", "Laundry", "Other"];
 
 function Expenses() {
-  const [period, setPeriod] = useState<Period>("month");
+  const { filters, range: picked } = useFilters();
+  const allCottages = useCottages().data ?? [];
   const [adding, setAdding] = useState(false);
-  const { from, to } = range(period);
+  const { from, to } = picked;
   const q = useQuery({
     queryKey: ["expenses", from, to],
     queryFn: async () => {
@@ -36,7 +37,9 @@ function Expenses() {
     },
   });
   if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
-  const rows = q.data ?? [];
+  const scope = scopedCottages(filters.scope, allCottages);
+  // A cottage filter shows that cottage's costs; resort-wide costs only under All cottages.
+  const rows = (q.data ?? []).filter((x) => !scope || (x.cottage_id && scope.has(x.cottage_id)));
   const total = rows.reduce((s, x) => s + Number(x.amount), 0);
   const byCat = CATEGORIES.map((c) => ({ c, v: rows.filter((x) => x.category === c).reduce((s, x) => s + Number(x.amount), 0) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v);
 
@@ -52,7 +55,6 @@ function Expenses() {
           </div>
         }
       />
-      <PeriodChips value={period} onChange={setPeriod} />
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KpiCard label="Total spent" value={php(total)} sub={`${rows.length} entries`} />
         {byCat.slice(0, 3).map((x) => <KpiCard key={x.c} label={x.c} value={php(x.v)} sub={`${Math.round((x.v / (total || 1)) * 100)}% of spending`} />)}

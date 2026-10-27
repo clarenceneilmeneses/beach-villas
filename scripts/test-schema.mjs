@@ -106,6 +106,8 @@ await expectOk("second message goes to the same thread", "select guest_send_mess
 const gt = await db.query("select count(*)::int as n from threads t join guests g on g.id = t.guest_id where g.user_id = '22222222-2222-2222-2222-222222222222' and t.channel = 'website' and t.unread");
 console.log(gt.rows[0].n === 1 ? "  ok   " : "  FAIL ", "one unread website thread →", gt.rows[0].n); if (gt.rows[0].n !== 1) failures++;
 await as("staff@beach.test");
+const ma = await db.query("select count(*)::int as n, min(free) as lo from type_month_availability($1, manila_today(), manila_today() + 30)", [kuboType]);
+console.log(ma.rows[0].n === 93 ? "  ok   " : "  FAIL ", "month availability: 31 days x 3 slots →", ma.rows[0].n, "rows, fewest free", ma.rows[0].lo); if (ma.rows[0].n !== 93) failures++;
 await expectOk("board for today returns 28 halves", `select count(*) as n from board(manila_today())`);
 console.log("  info  board rows:", (await db.query(`select count(*)::int as n from board(manila_today())`)).rows[0].n);
 

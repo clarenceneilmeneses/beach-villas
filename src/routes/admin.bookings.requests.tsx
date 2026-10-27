@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Eye } from "@/components/icons";
 import { MethodPill, SourcePill } from "@/components/obs/booking-bits";
 import { SectionHeading } from "@/components/obs/cards";
+import { ViewReceiptButton } from "@/components/obs/receipt-dialog";
 import { EmptyState, ErrorState, LoadingState } from "@/components/obs/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,9 +71,7 @@ function Requests() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={async () => { const u = await signedUrl(p.receipt_path); u ? window.open(u, "_blank") : toast.error("No receipt file"); }}>
-                      <Eye className="size-4" /> View receipt
-                    </Button>
+                    <ViewReceiptButton payment={p} />
                     <div className="flex-1" />
                     <Button variant="destructive-outline" size="sm" onClick={() => decide(p.id, false)}>Reject</Button>
                     <Button variant="success" size="sm" onClick={() => decide(p.id, true)}>Verify</Button>

@@ -9,6 +9,8 @@ import { ErrorState, LoadingState } from "@/components/obs/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useStaff } from "@/lib/auth";
+import { useCottages } from "@/lib/data";
+import { scopedCottages, useFilters } from "@/lib/filters";
 import { addDays, manilaDayStart, manilaToday, METHOD_LABEL, niceDate, php } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
@@ -17,6 +19,8 @@ export const Route = createFileRoute("/admin/")({ component: Dashboard });
 function Dashboard() {
   const [date, setDate] = useState(manilaToday());
   const board = useBoard(date);
+  const { filters } = useFilters();
+  const allCottages = useCottages().data ?? [];
   const owner = useStaff().data?.role === "owner";
   const navigate = useNavigate();
   const booking = useBookingDialog();
@@ -29,7 +33,8 @@ function Dashboard() {
 
   if (board.error) return <ErrorState error={board.error} onRetry={() => board.refetch()} />;
   if (board.isLoading) return <LoadingState />;
-  const rows = board.data ?? [];
+  const scope = scopedCottages(filters.scope, allCottages);
+  const rows = (board.data ?? []).filter((h) => !scope || scope.has(h.cottage_id));
   const cottages = byCottage(rows);
   const free = rows.filter((h) => !h.booking_id).length;
   const inHouse = new Set(rows.filter((h) => h.status === "checked_in" && !h.checked_out_at).map((h) => h.booking_id)).size;
@@ -60,7 +65,7 @@ function Dashboard() {
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <section>
-          <SectionHeading eyebrow="14 cottages · tap a free half to book" title="Cottage board" action={<Button onClick={() => booking.open({ date, source: "walk_in" })}>Walk-in</Button>} />
+          <SectionHeading eyebrow={`${new Set(rows.map((h) => h.cottage_id)).size} cottages · tap a free half to book`} title="Cottage board" action={<Button onClick={() => booking.open({ date, source: "walk_in" })}>Walk-in</Button>} />
           <Card className="border-border/70 bg-surface shadow-level-2">
             <CardContent className="p-4">
               <div className="grid gap-2.5 sm:grid-cols-2 2xl:grid-cols-3">

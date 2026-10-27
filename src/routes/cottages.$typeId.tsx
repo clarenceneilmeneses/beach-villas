@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Check, Clock, Minus, Plus, Sun, Users, Waves } from "@/components/icons";
 import { useNavPillAway } from "@/components/nav-pill";
+import { AvailabilityCalendar } from "@/components/public/availability-calendar";
 import { PhotoTile, PublicShell } from "@/components/public/chrome";
 import { stayParams, withDefaults, type GuestSlot } from "@/components/public/search-pill";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,13 @@ function CottagePage() {
                   <Feature icon={Clock} title="Overnight" text={slotTimes(settings, "night")} />
                   <Feature icon={Waves} title="22 hours" text={slotTimes(settings, "h22")} />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card id="availability" className="scroll-mt-24 rounded-3xl border-border/70 shadow-level-1">
+              <CardContent className="space-y-4 p-6 sm:p-8">
+                <h2 className="site-display text-2xl">Availability</h2>
+                <AvailabilityCalendar typeId={t.id} slot={slot} onSlot={setSlot} date={date} onDate={setDate} />
               </CardContent>
             </Card>
 

@@ -33,10 +33,10 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth, useStaff } from "@/lib/auth";
 import { useSettings } from "@/lib/data";
-import { manilaToday, niceDate } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { BookingDialog, useBookingDialog } from "./booking-dialog";
+import { ClearFilters, DatePicker, FilterSheet, ScopePicker } from "./scope-bar";
 import { LoadingState } from "./states";
 
 /**
@@ -392,8 +392,6 @@ function ShellInner({ children }: { children: ReactNode }) {
     });
 
   const tab = useMemo(() => NAV.flatMap((g) => g.tabs).filter((t) => isActive(t.to, pathname)).sort((a, b) => b.to.length - a.to.length)[0], [pathname]);
-  const today = manilaToday();
-
   return (
     <TooltipProvider delayDuration={200}>
       <div className="min-h-screen bg-surface-muted [--mobile-nav-space:calc(5.75rem+env(safe-area-inset-bottom))] lg:[--mobile-nav-space:0px]">
@@ -425,7 +423,12 @@ function ShellInner({ children }: { children: ReactNode }) {
                 </Sheet>
                 <Breadcrumbs tab={tab} pathname={pathname} />
                 <div className="hidden items-center gap-2.5 lg:flex">
-                  <span className="mr-1 text-sm text-muted-foreground">{niceDate(today, { weekday: "long", month: "long", day: "numeric" })}</span>
+                  <div className={TOP_PILL}>
+                    <ScopePicker className="max-w-[200px]" />
+                    <span aria-hidden className="h-5 w-px bg-border" />
+                    <DatePicker />
+                    <ClearFilters />
+                  </div>
                   <div className={TOP_PILL}>
                     <Button variant="ghost" className="rounded-full" onClick={() => booking.open({ source: "walk_in" })}>
                       <Plus className="size-4" /> Walk-in
@@ -438,9 +441,9 @@ function ShellInner({ children }: { children: ReactNode }) {
                 </div>
                 <div className="flex w-full items-center justify-between gap-3 lg:hidden">
                   <AccountMenu align="start" />
-                  <div className={cn(TOP_PILL, "p-1 pr-3 text-sm text-muted-foreground")}>
-                    <Link to="/admin/calendar" className="rounded-full p-2 text-foreground/75 hover:bg-secondary" aria-label="Calendar"><CalendarDays className="size-[18px]" /></Link>
-                    {niceDate(today)}
+                  <div className={cn(TOP_PILL, "p-1")}>
+                    <Link to="/admin/calendar" className="grid size-9 place-items-center rounded-full text-foreground/75 hover:bg-secondary" aria-label="Calendar"><CalendarDays className="size-[18px]" /></Link>
+                    <FilterSheet />
                   </div>
                 </div>
               </div>

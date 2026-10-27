@@ -30,13 +30,15 @@ export const collectedOf = (b: Pick<BookingRow, "payments">) =>
 export const pax = (b: Pick<BookingRow, "pax_adults" | "pax_children">) => b.pax_adults + b.pax_children;
 
 /** Bookings, newest stay first, optionally searched by name, mobile or BK- number. */
-export function useBookings({ search = "", from, to, limit = 300 }: { search?: string; from?: string; to?: string; limit?: number }) {
+export function useBookings({ search = "", from, to, limit = 300, cottageIds = null }: { search?: string; from?: string; to?: string; limit?: number; cottageIds?: Set<string> | null }) {
+  const ids = cottageIds ? [...cottageIds].sort() : null;
   return useQuery({
-    queryKey: ["bookings", search, from, to, limit],
+    queryKey: ["bookings", search, from, to, limit, ids?.join(",") ?? "all"],
     queryFn: async () => {
       let q = supabase.from("bookings").select(BOOKING_COLS).neq("status", "blocked").order("stay_date", { ascending: false }).order("created_at", { ascending: false }).limit(limit);
       if (from) q = q.gte("stay_date", from);
       if (to) q = q.lte("stay_date", to);
+      if (ids) q = q.in("cottage_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
       const s = search.trim();
       if (s) {
         const { data: g } = await supabase.from("guests").select("id").or(`name.ilike.%${s}%,mobile.ilike.%${s}%`).limit(100);

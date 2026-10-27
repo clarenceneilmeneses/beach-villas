@@ -4,23 +4,26 @@ import { Download } from "@/components/icons";
 import { OwnerOnly } from "@/components/obs/app-shell";
 import { MethodPill } from "@/components/obs/booking-bits";
 import { KpiCard, SectionHeading } from "@/components/obs/cards";
-import { PeriodChips } from "@/components/obs/period-chips";
 import { EmptyState, ErrorState, LoadingState } from "@/components/obs/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { downloadCsv, range, signed, usePayments, type Period } from "@/lib/finance";
+import { downloadCsv, signed, usePayments } from "@/lib/finance";
+import { scopedCottages, useFilters } from "@/lib/filters";
+import { useCottages } from "@/lib/data";
 import { niceDate, niceDateTime, php } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/finance/")({ component: () => <OwnerOnly><Collections /></OwnerOnly> });
 
 function Collections() {
-  const [period, setPeriod] = useState<Period>("month");
-  const { from, to } = range(period);
+  const { filters, range: picked } = useFilters();
+  const allCottages = useCottages().data ?? [];
+  const { from, to } = picked;
   const q = usePayments(from, to);
   if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
-  const rows = q.data ?? [];
+  const scope = scopedCottages(filters.scope, allCottages);
+  const rows = (q.data ?? []).filter((p) => !scope || scope.has(p.bookings?.cottage_id));
   const by = (m: string) => rows.filter((p) => p.method === m).reduce((s, p) => s + signed(p), 0);
   const total = rows.reduce((s, p) => s + signed(p), 0);
   const dp = rows.filter((p) => p.kind === "downpayment").reduce((s, p) => s + signed(p), 0);
@@ -32,7 +35,6 @@ function Collections() {
         title="Money in"
         action={<Button variant="outline" onClick={() => downloadCsv(`collections-${from}-${to}.csv`, rows.map((p) => ({ date: p.created_at, booking: p.bookings?.code, guest: p.bookings?.guests?.name, cottage: p.bookings?.cottages?.name, kind: p.kind, method: p.method, amount: p.amount, staff: p.created_by, edited: p.edited })))}><Download className="size-4" /> Export CSV</Button>}
       />
-      <PeriodChips value={period} onChange={setPeriod} />
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KpiCard label="Collected" value={php(total)} sub={`${rows.length} verified payments`} />
         <KpiCard label="Cash" value={php(by("cash"))} sub="Counted at Daily close" to="/admin/finance/close" />

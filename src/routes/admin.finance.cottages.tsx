@@ -3,12 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { OwnerOnly } from "@/components/obs/app-shell";
 import { KpiCard, SectionHeading } from "@/components/obs/cards";
-import { PeriodChips } from "@/components/obs/period-chips";
 import { ErrorState, LoadingState } from "@/components/obs/states";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCottages } from "@/lib/data";
-import { range, signed, type Period } from "@/lib/finance";
+import { signed } from "@/lib/finance";
+import { scopedCottages, useFilters } from "@/lib/filters";
 import { halvesOf, php, type Slot } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
@@ -16,8 +16,8 @@ export const Route = createFileRoute("/admin/finance/cottages")({ component: () 
 
 /** Malaya's property P&L, one row per cottage. */
 function PerCottage() {
-  const [period, setPeriod] = useState<Period>("month");
-  const { from, to, days } = range(period);
+  const { filters, range: picked } = useFilters();
+  const { from, to, days } = picked;
   const cottages = useCottages().data ?? [];
   const q = useQuery({
     queryKey: ["per-cottage", from, to],
@@ -33,7 +33,8 @@ function PerCottage() {
   if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (q.isLoading || !q.data) return <LoadingState />;
 
-  const data = cottages.map((c) => {
+  const scope = scopedCottages(filters.scope, cottages);
+  const data = cottages.filter((c) => !scope || scope.has(c.id)).map((c) => {
     const bs = q.data.bookings.filter((b) => b.cottage_id === c.id);
     const occupied = bs.filter((b) => !["cancelled", "no_show"].includes(b.status));
     const collected = bs.reduce((s, b) => s + (b.payments ?? []).filter((p: any) => p.status === "verified").reduce((a: number, p: any) => a + signed(p), 0), 0);
@@ -60,7 +61,6 @@ function PerCottage() {
   return (
     <div className="space-y-6">
       <SectionHeading eyebrow="Per cottage" title="Which cottages earn" />
-      <PeriodChips value={period} onChange={setPeriod} />
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KpiCard label="Collected" value={php(totalCollected)} sub="All cottages" />
         <KpiCard label="Occupancy" value={`${avgOcc}%`} sub="Day and night halves" />

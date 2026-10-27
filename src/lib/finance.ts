@@ -34,7 +34,7 @@ export function usePayments(from: string, to: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
-        .select("id, booking_id, kind, method, amount, status, created_by, created_at, edited, bookings(code, cottages(name), guests(name))")
+        .select("id, booking_id, kind, method, amount, status, created_by, created_at, edited, bookings(code, cottage_id, cottages(name), guests(name))")
         .eq("status", "verified")
         .gte("created_at", manilaDayStart(from))
         .lt("created_at", manilaDayStart(addDays(to, 1)))

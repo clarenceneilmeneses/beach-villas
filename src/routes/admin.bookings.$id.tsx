@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Camera, Phone } from "@/components/icons";
 import { MethodPill, PaymentPill, SourcePill, StatusPill } from "@/components/obs/booking-bits";
 import { SectionHeading } from "@/components/obs/cards";
+import { ViewReceiptButton } from "@/components/obs/receipt-dialog";
 import { ErrorState, LoadingState } from "@/components/obs/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,11 +66,7 @@ function Detail() {
   const blocked = b.status === "blocked";
   const payActions = (p: PaymentRow) => (
     <>
-      {p.receipt_path && (
-        <Button size="sm" variant="ghost" onClick={async () => { const u = await signedUrl(p.receipt_path); if (u) window.open(u, "_blank"); }}>
-          <Camera className="size-4" />
-        </Button>
-      )}
+      <ViewReceiptButton payment={p} />
       {p.status === "submitted" && (
         <>
           <Button size="sm" variant="destructive-outline" onClick={() => act("verify_payment", { p_payment: p.id, p_ok: false }, "Rejected")}>Reject</Button>
@@ -168,9 +165,9 @@ function Detail() {
                               <PaymentPill status={p.status} />
                               {p.edited && <Badge variant="outline" className="ml-1 rounded-full border-warning/30 bg-warning/12 text-[11px] text-warning">Edited</Badge>}
                             </TableCell>
-                            <TableCell className="space-x-1 whitespace-nowrap text-right">
+                            <TableCell className="whitespace-nowrap text-right"><div className="flex justify-end gap-1.5">
                               {payActions(p)}
-                            </TableCell>
+                            </div></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

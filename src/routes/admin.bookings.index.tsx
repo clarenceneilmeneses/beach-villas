@@ -11,6 +11,8 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/obs/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useCottages } from "@/lib/data";
+import { scopedCottages, useFilters } from "@/lib/filters";
 import { collectedOf, pax, useBookings, type BookingRow } from "@/lib/bookings";
 import { niceDate, niceDateTime, php, SLOT_LABEL } from "@/lib/format";
 
@@ -28,7 +30,10 @@ const TABS: { value: Tab; label: string; test: (b: BookingRow) => boolean; waiti
 function Reservations() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("active");
-  const q = useBookings({ search });
+  const { filters, range } = useFilters();
+  const cottageIds = scopedCottages(filters.scope, useCottages().data ?? []);
+  // A search looks across every date, as in Malaya; otherwise the top bar's range applies.
+  const q = useBookings(search.trim() ? { search, cottageIds } : { from: range.from, to: range.to, cottageIds });
   const booking = useBookingDialog();
   const all = q.data ?? [];
   const counts = useMemo(() => Object.fromEntries(TABS.map((t) => [t.value, all.filter(t.test).length])) as Record<Tab, number>, [all]);
@@ -46,7 +51,7 @@ function Reservations() {
 
   return (
     <div className="space-y-6">
-      <SectionHeading eyebrow="Reservations · every channel" title="All reservations" action={<Button onClick={() => booking.open({ source: "messenger" })}>New reservation</Button>} />
+      <SectionHeading eyebrow={search.trim() ? "Reservations · all dates" : `Reservations · staying ${range.span}`} title="All reservations" action={<Button onClick={() => booking.open({ source: "messenger" })}>New reservation</Button>} />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KpiCard label="Reservations" value={String(totals.count)} sub="Excludes cancelled and no-shows" />
@@ -57,7 +62,7 @@ function Reservations() {
 
       <div className="flex flex-wrap items-center gap-2.5">
         <ChipGroup label="Reservation status" value={tab} onChange={setTab} chips={TABS.map((t) => ({ value: t.value, label: t.label, count: counts[t.value], waiting: t.waiting }))} />
-        <SearchPill className="w-full flex-1 sm:w-auto" placeholder="Search BK- number, guest or mobile" value={search} onChange={setSearch} />
+        <SearchPill className="w-full flex-1 sm:w-auto" placeholder="Search BK- number, guest or mobile — all dates" value={search} onChange={setSearch} />
       </div>
 
       {q.isLoading ? (
