@@ -58,7 +58,7 @@ function Inbox() {
     .filter((r) => !search.trim() || `${r.guests?.name} ${r.guests?.mobile}`.toLowerCase().includes(search.trim().toLowerCase()));
 
   const list = (
-    <Card className={cn("flex min-h-0 flex-col border-border/70 bg-surface shadow-level-2", t && "hidden lg:flex")}>
+    <Card className={cn("flex min-h-0 min-w-0 flex-col border-border/70 bg-surface shadow-level-2", t && "hidden lg:flex")}>
       <div className="space-y-2.5 border-b border-border/70 p-3">
         <ChipGroup label="Conversations" value={filter} onChange={setFilter} chips={[
           { value: "all", label: "All", count: all.length },
@@ -95,7 +95,7 @@ function Inbox() {
       <div className="rounded-2xl border border-border/70 bg-card px-4 py-2.5 text-sm text-muted-foreground shadow-level-1">
         Messenger connects here once Meta approves the app; until then these are sample chats. WhatsApp and Viber stay in their own apps — use Copy on a quick reply.
       </div>
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[360px_1fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[360px_minmax(0,1fr)]">
         {list}
         {t ? <Thread id={t} onBack={() => navigate({ to: "/admin/inbox", search: {} })} /> : (
           <Card className="hidden place-items-center border-dashed shadow-none lg:grid">
@@ -150,7 +150,7 @@ function Thread({ id, onBack }: { id: string; onBack: () => void }) {
   }
 
   return (
-    <Card className="flex min-h-[70dvh] flex-col border-border/70 bg-surface shadow-level-2 lg:min-h-0">
+    <Card className="flex min-h-[70dvh] min-w-0 flex-col border-border/70 bg-surface shadow-level-2 lg:min-h-0">
       <div className="flex flex-wrap items-center gap-3 border-b border-border/70 px-4 py-3">
         <Button variant="ghost" size="icon" className="rounded-full lg:hidden" onClick={onBack} aria-label="Back"><ArrowLeft className="size-4" /></Button>
         <div className="min-w-0 flex-1">
