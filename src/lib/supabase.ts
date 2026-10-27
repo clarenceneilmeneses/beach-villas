@@ -37,3 +37,19 @@ export async function uploadReceipt(folder: string, file: File) {
   if (error) throw new Error(error.message);
   return path;
 }
+
+/**
+ * Every row of a read, past Supabase's 1,000-row cap, 1,000 at a time
+ * (Malaya's allRows). `build` returns a fresh, ordered query; end the order
+ * with a unique column so the pages don't overlap.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function allRows<T>(build: () => any, pageSize = 1000): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await build().range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    out.push(...((data ?? []) as T[]));
+    if (!data || data.length < pageSize) return out;
+  }
+}

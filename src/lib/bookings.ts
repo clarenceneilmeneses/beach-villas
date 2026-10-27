@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "./supabase";
+import { allRows, supabase } from "./supabase";
 import type { Slot } from "./format";
 
 export type BookingRow = {
@@ -29,25 +29,27 @@ export const collectedOf = (b: Pick<BookingRow, "payments">) =>
 
 export const pax = (b: Pick<BookingRow, "pax_adults" | "pax_children">) => b.pax_adults + b.pax_children;
 
-/** Bookings, newest stay first, optionally searched by name, mobile or BK- number. */
-export function useBookings({ search = "", from, to, limit = 300, cottageIds = null }: { search?: string; from?: string; to?: string; limit?: number; cottageIds?: Set<string> | null }) {
+/** Bookings, newest stay first, every one in range; optionally searched by name, mobile or BK- number. */
+export function useBookings({ search = "", from, to, cottageIds = null }: { search?: string; from?: string; to?: string; limit?: number; cottageIds?: Set<string> | null }) {
   const ids = cottageIds ? [...cottageIds].sort() : null;
   return useQuery({
-    queryKey: ["bookings", search, from, to, limit, ids?.join(",") ?? "all"],
+    queryKey: ["bookings", search, from, to, ids?.join(",") ?? "all"],
     queryFn: async () => {
-      let q = supabase.from("bookings").select(BOOKING_COLS).neq("status", "blocked").order("stay_date", { ascending: false }).order("created_at", { ascending: false }).limit(limit);
-      if (from) q = q.gte("stay_date", from);
-      if (to) q = q.lte("stay_date", to);
-      if (ids) q = q.in("cottage_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+      let guestIds: string[] | null = null;
       const s = search.trim();
       if (s) {
-        const { data: g } = await supabase.from("guests").select("id").or(`name.ilike.%${s}%,mobile.ilike.%${s}%`).limit(100);
-        const ids = (g ?? []).map((x) => x.id);
-        q = q.or(`code.ilike.%${s}%${ids.length ? `,guest_id.in.(${ids.join(",")})` : ""}`);
+        const { data: g } = await supabase.from("guests").select("id").or(`name.ilike.%${s}%,mobile.ilike.%${s}%`).limit(500);
+        guestIds = (g ?? []).map((x) => x.id);
       }
-      const { data, error } = await q;
-      if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as BookingRow[];
+      const build = () => {
+        let q = supabase.from("bookings").select(BOOKING_COLS).neq("status", "blocked").order("stay_date", { ascending: false }).order("created_at", { ascending: false }).order("id");
+        if (from) q = q.gte("stay_date", from);
+        if (to) q = q.lte("stay_date", to);
+        if (ids) q = q.in("cottage_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+        if (s) q = q.or(`code.ilike.%${s}%${guestIds?.length ? `,guest_id.in.(${guestIds.join(",")})` : ""}`);
+        return q;
+      };
+      return allRows<BookingRow>(build);
     },
   });
 }

@@ -92,7 +92,8 @@ const NAV: { label: string; tabs: Tab[] }[] = [
         icon: Wallet,
         owner: true,
         subTabs: [
-          { to: "/admin/finance", label: "Collections" },
+          { to: "/admin/finance", label: "Overview" },
+          { to: "/admin/finance/collections", label: "Collections" },
           { to: "/admin/finance/close", label: "Daily close" },
           { to: "/admin/finance/expenses", label: "Expenses" },
           { to: "/admin/finance/cottages", label: "Per cottage" },

@@ -12,12 +12,13 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PaginationBar, usePagination } from "@/components/obs/paginated";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCottages } from "@/lib/data";
 import { downloadCsv } from "@/lib/finance";
 import { scopedCottages, useFilters } from "@/lib/filters";
 import { manilaToday, niceDate, php } from "@/lib/format";
-import { supabase } from "@/lib/supabase";
+import { allRows, supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/finance/expenses")({ component: () => <OwnerOnly><Expenses /></OwnerOnly> });
 
@@ -31,15 +32,14 @@ function Expenses() {
   const q = useQuery({
     queryKey: ["expenses", from, to],
     queryFn: async () => {
-      const { data, error } = await supabase.from("expenses").select("*, cottages(name)").gte("spent_on", from).lte("spent_on", to).order("spent_on", { ascending: false });
-      if (error) throw new Error(error.message);
-      return data as any[];
+      return allRows<any>(() => supabase.from("expenses").select("*, cottages(name)").gte("spent_on", from).lte("spent_on", to).order("spent_on", { ascending: false }).order("id"));
     },
   });
-  if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   const scope = scopedCottages(filters.scope, allCottages);
   // A cottage filter shows that cottage's costs; resort-wide costs only under All cottages.
   const rows = (q.data ?? []).filter((x) => !scope || (x.cottage_id && scope.has(x.cottage_id)));
+  const paged = usePagination(rows, { initialPageSize: 50, resetKey: `${from}|${to}|${filters.scope}` });
+  if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   const total = rows.reduce((s, x) => s + Number(x.amount), 0);
   const byCat = CATEGORIES.map((c) => ({ c, v: rows.filter((x) => x.category === c).reduce((s, x) => s + Number(x.amount), 0) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v);
 
@@ -73,7 +73,7 @@ function Expenses() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((x) => (
+                {paged.page.map((x) => (
                   <TableRow key={x.id}>
                     <TableCell className="whitespace-nowrap text-sm">{niceDate(x.spent_on)}</TableCell>
                     <TableCell className="text-sm">{x.category}</TableCell>
@@ -87,6 +87,7 @@ function Expenses() {
           </CardContent>
         </Card>
       )}
+      {rows.length > 0 && <PaginationBar pagination={paged} noun="expenses" />}
       {adding && <AddExpense onClose={() => setAdding(false)} />}
     </div>
   );

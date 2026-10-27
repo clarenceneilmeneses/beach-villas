@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { niceDate, niceDateTime, php, SLOT_LABEL, type Slot } from "@/lib/format";
-import { rpc, supabase } from "@/lib/supabase";
+import { allRows, rpc, supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/inbox")({
@@ -40,14 +40,16 @@ function Inbox() {
   const threads = useQuery({
     queryKey: ["inbox", "threads"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("threads")
-        .select("id, channel, unread, last_message_at, guests(name, mobile), messages(author, body, created_at)")
-        .order("last_message_at", { ascending: false })
-        .order("created_at", { referencedTable: "messages", ascending: false })
-        .limit(1, { referencedTable: "messages" });
-      if (error) throw new Error(error.message);
-      return data as any[];
+      // Every conversation, past the 1,000-row cap (Malaya PR #121), with its latest message.
+      return allRows<any>(() =>
+        supabase
+          .from("threads")
+          .select("id, channel, unread, last_message_at, guests(name, mobile), messages(author, body, created_at)")
+          .order("last_message_at", { ascending: false })
+          .order("id")
+          .order("created_at", { referencedTable: "messages", ascending: false })
+          .limit(1, { referencedTable: "messages" }),
+      );
     },
   });
   if (threads.error) return <ErrorState error={threads.error} onRetry={() => threads.refetch()} />;

@@ -2,12 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { SectionHeading } from "@/components/obs/cards";
+import { PaginationBar, usePagination } from "@/components/obs/paginated";
 import { SearchPill } from "@/components/obs/search-pill";
 import { EmptyState, ErrorState, LoadingState } from "@/components/obs/states";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { niceDate } from "@/lib/format";
-import { supabase } from "@/lib/supabase";
+import { allRows, supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/bookings/guests")({ component: Guests });
 
@@ -16,20 +17,21 @@ function Guests() {
   const q = useQuery({
     queryKey: ["guests", search],
     queryFn: async () => {
-      let query = supabase.from("guests").select("id, name, mobile, email, created_at, bookings(stay_date, status)").order("created_at", { ascending: false }).limit(200);
       const s = search.trim();
-      if (s) query = query.or(`name.ilike.%${s}%,mobile.ilike.%${s}%,email.ilike.%${s}%`);
-      const { data, error } = await query;
-      if (error) throw new Error(error.message);
-      return data as any[];
+      return allRows<any>(() => {
+        let query = supabase.from("guests").select("id, name, mobile, email, created_at, bookings(stay_date, status)").order("created_at", { ascending: false }).order("id");
+        if (s) query = query.or(`name.ilike.%${s}%,mobile.ilike.%${s}%,email.ilike.%${s}%`);
+        return query;
+      });
     },
   });
-  if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   const rows = (q.data ?? []).map((g) => {
     const stays = (g.bookings ?? []).filter((b: any) => !["cancelled", "expired", "blocked"].includes(b.status));
     const last = stays.map((b: any) => b.stay_date).sort().at(-1);
     return { ...g, visits: stays.length, last };
   });
+  const paged = usePagination(rows, { initialPageSize: 50, resetKey: search });
+  if (q.error) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   return (
     <div className="space-y-6">
       <SectionHeading eyebrow={`${rows.length} guests`} title="Guest list" action={<SearchPill placeholder="Search name, mobile or email" value={search} onChange={setSearch} />} />
@@ -46,7 +48,7 @@ function Guests() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((g) => (
+                {paged.page.map((g) => (
                   <TableRow key={g.id}>
                     <TableCell>
                       <p className="text-sm font-medium">{g.name}</p>
@@ -62,6 +64,7 @@ function Guests() {
           </CardContent>
         </Card>
       )}
+      {rows.length > 0 && <PaginationBar pagination={paged} noun="guests" />}
     </div>
   );
 }

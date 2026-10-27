@@ -28,6 +28,7 @@ import { Route as AdminBookingsRequestsRouteImport } from './routes/admin.bookin
 import { Route as AdminBookingsTodayRouteImport } from './routes/admin.bookings.today'
 import { Route as AdminFinanceIndexRouteImport } from './routes/admin.finance.index'
 import { Route as AdminFinanceCloseRouteImport } from './routes/admin.finance.close'
+import { Route as AdminFinanceCollectionsRouteImport } from './routes/admin.finance.collections'
 import { Route as AdminFinanceCottagesRouteImport } from './routes/admin.finance.cottages'
 import { Route as AdminFinanceExpensesRouteImport } from './routes/admin.finance.expenses'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin.settings.index'
@@ -130,6 +131,11 @@ const AdminFinanceCloseRoute = AdminFinanceCloseRouteImport.update({
   path: '/finance/close',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminFinanceCollectionsRoute = AdminFinanceCollectionsRouteImport.update({
+  id: '/finance/collections',
+  path: '/finance/collections',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminFinanceCottagesRoute = AdminFinanceCottagesRouteImport.update({
   id: '/finance/cottages',
   path: '/finance/cottages',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/admin/bookings/requests': typeof AdminBookingsRequestsRoute
   '/admin/bookings/today': typeof AdminBookingsTodayRoute
   '/admin/finance/close': typeof AdminFinanceCloseRoute
+  '/admin/finance/collections': typeof AdminFinanceCollectionsRoute
   '/admin/finance/cottages': typeof AdminFinanceCottagesRoute
   '/admin/finance/expenses': typeof AdminFinanceExpensesRoute
   '/admin/settings/cottages': typeof AdminSettingsCottagesRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/admin/bookings/requests': typeof AdminBookingsRequestsRoute
   '/admin/bookings/today': typeof AdminBookingsTodayRoute
   '/admin/finance/close': typeof AdminFinanceCloseRoute
+  '/admin/finance/collections': typeof AdminFinanceCollectionsRoute
   '/admin/finance/cottages': typeof AdminFinanceCottagesRoute
   '/admin/finance/expenses': typeof AdminFinanceExpensesRoute
   '/admin/settings/cottages': typeof AdminSettingsCottagesRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/admin/bookings/requests': typeof AdminBookingsRequestsRoute
   '/admin/bookings/today': typeof AdminBookingsTodayRoute
   '/admin/finance/close': typeof AdminFinanceCloseRoute
+  '/admin/finance/collections': typeof AdminFinanceCollectionsRoute
   '/admin/finance/cottages': typeof AdminFinanceCottagesRoute
   '/admin/finance/expenses': typeof AdminFinanceExpensesRoute
   '/admin/settings/cottages': typeof AdminSettingsCottagesRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/admin/bookings/requests'
     | '/admin/bookings/today'
     | '/admin/finance/close'
+    | '/admin/finance/collections'
     | '/admin/finance/cottages'
     | '/admin/finance/expenses'
     | '/admin/settings/cottages'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/admin/bookings/requests'
     | '/admin/bookings/today'
     | '/admin/finance/close'
+    | '/admin/finance/collections'
     | '/admin/finance/cottages'
     | '/admin/finance/expenses'
     | '/admin/settings/cottages'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/admin/bookings/requests'
     | '/admin/bookings/today'
     | '/admin/finance/close'
+    | '/admin/finance/collections'
     | '/admin/finance/cottages'
     | '/admin/finance/expenses'
     | '/admin/settings/cottages'
@@ -472,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFinanceCloseRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/finance/collections': {
+      id: '/admin/finance/collections'
+      path: '/finance/collections'
+      fullPath: '/admin/finance/collections'
+      preLoaderRoute: typeof AdminFinanceCollectionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/finance/cottages': {
       id: '/admin/finance/cottages'
       path: '/finance/cottages'
@@ -527,6 +546,7 @@ interface AdminRouteChildren {
   AdminBookingsRequestsRoute: typeof AdminBookingsRequestsRoute
   AdminBookingsTodayRoute: typeof AdminBookingsTodayRoute
   AdminFinanceCloseRoute: typeof AdminFinanceCloseRoute
+  AdminFinanceCollectionsRoute: typeof AdminFinanceCollectionsRoute
   AdminFinanceCottagesRoute: typeof AdminFinanceCottagesRoute
   AdminFinanceExpensesRoute: typeof AdminFinanceExpensesRoute
   AdminSettingsCottagesRoute: typeof AdminSettingsCottagesRoute
@@ -547,6 +567,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBookingsRequestsRoute: AdminBookingsRequestsRoute,
   AdminBookingsTodayRoute: AdminBookingsTodayRoute,
   AdminFinanceCloseRoute: AdminFinanceCloseRoute,
+  AdminFinanceCollectionsRoute: AdminFinanceCollectionsRoute,
   AdminFinanceCottagesRoute: AdminFinanceCottagesRoute,
   AdminFinanceExpensesRoute: AdminFinanceExpensesRoute,
   AdminSettingsCottagesRoute: AdminSettingsCottagesRoute,

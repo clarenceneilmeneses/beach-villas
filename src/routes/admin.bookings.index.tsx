@@ -7,6 +7,7 @@ import { KpiCard, SectionHeading } from "@/components/obs/cards";
 import { ChipGroup } from "@/components/obs/chip-group";
 import { SearchPill } from "@/components/obs/search-pill";
 import { BookingCard } from "@/components/obs/booking-card";
+import { PaginationBar, usePagination } from "@/components/obs/paginated";
 import { EmptyState, ErrorState, LoadingState } from "@/components/obs/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +39,7 @@ function Reservations() {
   const all = q.data ?? [];
   const counts = useMemo(() => Object.fromEntries(TABS.map((t) => [t.value, all.filter(t.test).length])) as Record<Tab, number>, [all]);
   const rows = all.filter(TABS.find((t) => t.value === tab)!.test);
+  const paged = usePagination(rows, { initialPageSize: 50, resetKey: `${tab}|${search}|${range.from}|${range.to}|${filters.scope}` });
 
   const live = all.filter((b) => !["cancelled", "no_show", "expired"].includes(b.status));
   const totals = {
@@ -89,7 +91,7 @@ function Reservations() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((b) => (
+                  {paged.page.map((b) => (
                     <TableRow key={b.id} className="hover:bg-secondary/50">
                       <TableCell className="whitespace-nowrap text-sm">{niceDateTime(b.created_at)}</TableCell>
                       <TableCell className="font-mono text-xs">
@@ -125,8 +127,9 @@ function Reservations() {
           </Card>
 
           <div className="space-y-3 lg:hidden">
-            {rows.map((b) => <BookingCard key={b.id} b={b} />)}
+            {paged.page.map((b) => <BookingCard key={b.id} b={b} />)}
           </div>
+          <PaginationBar pagination={paged} noun="reservations" />
         </>
       )}
     </div>

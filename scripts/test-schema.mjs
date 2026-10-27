@@ -108,6 +108,14 @@ console.log(gt.rows[0].n === 1 ? "  ok   " : "  FAIL ", "one unread website thre
 await as("staff@beach.test");
 const ma = await db.query("select count(*)::int as n, min(free) as lo from type_month_availability($1, manila_today(), manila_today() + 30)", [kuboType]);
 console.log(ma.rows[0].n === 93 ? "  ok   " : "  FAIL ", "month availability: 31 days x 3 slots →", ma.rows[0].n, "rows, fewest free", ma.rows[0].lo); if (ma.rows[0].n !== 93) failures++;
+await as("owner@beach.test");
+const fsum = (await db.query("select finance_summary(manila_today() - 30, manila_today() + 30) as s")).rows[0].s;
+const sumOk = Number(fsum.collected) === fsum.cottages.reduce((a, c) => a + Number(c.collected), 0) && fsum.daily.length === 61 && fsum.capacity === 14 * 2 * 61;
+if (!sumOk) failures++;
+console.log(sumOk ? "  ok   " : "  FAIL ", "finance_summary: collected", fsum.collected, "= sum of cottages; 61 days; capacity", fsum.capacity);
+await as("guest@beach.test", "11111111-1111-1111-1111-111111111111");
+await expectError("guests are refused finance_summary", "select finance_summary(manila_today(), manila_today())", "Staff only");
+await as("staff@beach.test");
 await expectOk("board for today returns 28 halves", `select count(*) as n from board(manila_today())`);
 console.log("  info  board rows:", (await db.query(`select count(*)::int as n from board(manila_today())`)).rows[0].n);
 
